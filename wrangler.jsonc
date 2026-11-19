@@ -42,7 +42,7 @@
     "APPLE_SERVICES_ID": "",
     "FACEBOOK_APP_ID": "",
     "TURNSTILE_SITE_KEY": "",
-    "ACCESS_TEAM_DOMAIN": "bitter-grass-6f28.cloudflareaccess.com",
+    "ACCESS_TEAM_DOMAIN": "jadegarden.cloudflareaccess.com",
     // Who may edit combo contents in the staff app (comma-separated Access emails). Empty = every staff member.
     "ADMIN_EMAILS": "",
     "ACCESS_AUD": "3b808a89acbdb653e3b3af288c3048e3e9ffdc21eb54b99984e131b6130e2f47",
