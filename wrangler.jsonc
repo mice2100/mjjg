@@ -42,7 +42,7 @@
     "GOOGLE_CLIENT_ID": "",
     "APPLE_SERVICES_ID": "",
     "FACEBOOK_APP_ID": "",
-    "TURNSTILE_SITE_KEY": "",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAGJcinUT1RjV_oHy",
     "ACCESS_TEAM_DOMAIN": "jadegarden.cloudflareaccess.com",
     // Who may edit combo contents in the staff app (comma-separated Access emails). Empty = every staff member.
     "ADMIN_EMAILS": "",
