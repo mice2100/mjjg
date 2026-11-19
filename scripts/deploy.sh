@@ -36,6 +36,9 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 if [[ -f .deploy.env ]]; then
   set -a; source .deploy.env; set +a
 fi
+# Also accept CF_ACCOUNT_TOKEN / CF_ACCOUNT_ID (e.g. exported by mise).
+export CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-${CF_ACCOUNT_TOKEN:-}}"
+export CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-${CF_ACCOUNT_ID:-}}"
 
 require_auth() {
   wr whoami 2>&1 | grep -q "You are not authenticated" &&

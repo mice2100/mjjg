@@ -20,13 +20,13 @@
       "binding": "DB",
       "database_name": "jadegarden-db",
       // Replace with the real id from `wrangler d1 create jadegarden-db` before the first deploy.
-      "database_id": "d4575670-4ca0-4b1f-9e3e-60bb3d4a8ed7",
+      "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
   ],
   // Test host during dual-run. wrangler creates the DNS record and certificate on deploy.
   // workers_dev stays on: the Access app and webhooks also use the workers.dev host.
-  "routes": [{ "pattern": "jg.moosephotoprint.com", "custom_domain": true }],
+  "routes": [{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }],
   "workers_dev": true,
   "triggers": {
     // Every minute: expire abandoned Clover checkouts (releases their coupons) and pull
