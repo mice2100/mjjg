@@ -1,0 +1,272 @@
+---
+// Home page. Promotion-ready but promotion-independent: every <PromoSlot> renders
+// nothing until a file is added to src/content/promotions/, and the page is complete
+// without them.
+import Base from '../layouts/Base.astro';
+import PromoSlot from '../components/PromoSlot.astro';
+import { SITE, MENU, FEATURED_ITEM_IDS, GALLERY, PHOTO, displayName, formatPrice } from '../data/site.js';
+
+const featured = FEATURED_ITEM_IDS.map((id) => MENU.find((m) => m.id === id)).filter(Boolean);
+const hero = PHOTO['hero-ginger-beef'];
+const story = ['storefront', 'dining-room', 'buffet', 'bar'].map((slug) => PHOTO[slug]);
+const galleryPreview = ['food-shanghai-noodle', 'dining-room-3', 'food-dumplings', 'buffet-4', 'banquet-table', 'food-singapore-noodle']
+  .map((slug) => PHOTO[slug]);
+---
+<Base>
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow hero-eyebrow">Downtown Moose Jaw · Since 2012</p>
+          <h1>Fresh, authentic Chinese cooking — made to order.</h1>
+          <p class="hero-lede">
+            Family-owned and newly renovated. Order online for pickup or delivery, or join us for the
+            daily buffet in our licensed dining room.
+          </p>
+          <div class="hero-ctas">
+            <a class="btn btn-gold" href="/order/?type=pickup">Order for pickup</a>
+            <a class="btn btn-light" href="/order/?type=delivery">Order delivery</a>
+          </div>
+          <p class="hero-note">Delivery anywhere in Moose Jaw for {formatPrice(SITE.deliveryFee)}.</p>
+        </div>
+
+        <aside class="hero-side">
+          <!-- PROMOTION SLOT "hero": replaces nothing; sits above the hours card when present. -->
+          <PromoSlot placement="hero" limit={1} />
+          <figure class="hero-photo">
+            <img src={hero.src} alt={hero.alt} width={hero.width} height={hero.height} fetchpriority="high" />
+          </figure>
+          <div class="hours-card">
+            <h2>Open {SITE.openDays}</h2>
+            <dl>
+              {SITE.hours.map((h) => (
+                <div><dt>{h.label}</dt><dd>{h.value}</dd></div>
+              ))}
+            </dl>
+            <p class="closed">{SITE.closedDays}</p>
+            <a class="phone" href={SITE.phoneHref}>{SITE.phone}</a>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- PROMOTION SLOT "home-feature": a row of offer cards between hero and dishes. -->
+    <section class="promo-band" data-promo-band>
+      <div class="container">
+        <PromoSlot placement="home-feature" limit={3} />
+      </div>
+    </section>
+
+    <!-- FAVOURITES (not a promotion: regular menu prices) -->
+    <section class="section" id="favourites">
+      <div class="container">
+        <p class="eyebrow">House favourites</p>
+        <h2 class="section-title">What Moose Jaw keeps ordering</h2>
+        <ul class="dish-grid">
+          {featured.map((item) => (
+            <li class="dish">
+              {item.image && (
+                <img class="dish-img" src={item.image.replace('.webp', '-sm.webp')} alt={displayName(item)} loading="lazy" width="480" height="320" />
+              )}
+              <div class="dish-top">
+                {item.code && <span class="dish-code">{item.code}</span>}
+                <span class="dish-cat">{item.category}</span>
+              </div>
+              <h3>{displayName(item)}</h3>
+              <div class="dish-bottom">
+                <span class="dish-price">{formatPrice(item.price)}</span>
+                <a class="dish-add" href={`/order/?add=${item.id}`} aria-label={`Add ${displayName(item)} to order`}>Add +</a>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p style="margin-top:28px"><a class="btn btn-ghost" href="/order/">See the full menu</a></p>
+      </div>
+    </section>
+
+    <!-- ACCOUNT / RETENTION BAND: shown only when a sign-in provider is configured. -->
+    <section class="join" data-open-signin-band hidden>
+      <div class="container join-inner">
+        <div>
+          <h2>Order faster next time</h2>
+          <p>Create a free account with Google, Apple or Facebook. We'll remember your details, and you can choose to hear about new dishes and offers first.</p>
+        </div>
+        <button type="button" class="btn btn-gold" data-open-signin>Create an account</button>
+      </div>
+    </section>
+
+    <!-- ABOUT -->
+    <section class="section about" id="about">
+      <div class="container about-grid">
+        <div>
+          <p class="eyebrow">Our story</p>
+          <h2 class="section-title">Celebrating tradition and flavour since 2012</h2>
+        </div>
+        <div class="about-copy">
+          <p class="about-lead">
+            Since 2012, Jade Garden has been serving Moose Jaw fresh, authentic Chinese cuisine. We're family-owned
+            and newly renovated, with a licensed dining room, a daily buffet, and convenient take-out, delivery and catering.
+          </p>
+          <p>
+            Planning an event? Our banquet room seats up to 150 guests. Call us at <a href={SITE.phoneHref}>{SITE.phone}</a>{' '}to plan your celebration.
+          </p>
+        </div>
+        <div class="story-photos">
+          {story.map((p, i) => (
+            <img class={`story-${i}`} src={i === 0 ? p.src : p.thumb} alt={p.alt} loading="lazy" width={p.width} height={p.height} />
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- GALLERY PREVIEW -->
+    <section class="section gallery-preview">
+      <div class="container">
+        <div class="gp-head">
+          <div>
+            <p class="eyebrow">Gallery</p>
+            <h2 class="section-title">A look inside Jade Garden</h2>
+          </div>
+          <a class="btn btn-ghost" href="/gallery/">See all {GALLERY.length} photos</a>
+        </div>
+        <ul class="gp-grid">
+          {galleryPreview.map((p) => (
+            <li><a href={`/gallery/#${p.slug}`}><img src={p.thumb} alt={p.alt} loading="lazy" width="640" height="427" /></a></li>
+          ))}
+        </ul>
+      </div>
+    </section>
+
+    <!-- VISIT -->
+    <section class="section visit" id="visit">
+      <div class="container visit-grid">
+        <div>
+          <p class="eyebrow">Visit us</p>
+          <h2 class="section-title">In the heart of downtown</h2>
+          <address>
+            {SITE.address.street}<br />
+            {SITE.address.city}, {SITE.address.region} {SITE.address.postalCode}
+          </address>
+          <p style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-primary" href={SITE.mapsUrl} target="_blank" rel="noopener">Get directions</a>
+            <a class="btn btn-ghost" href={SITE.phoneHref}>Call {SITE.phone}</a>
+          </p>
+        </div>
+        <div class="visit-hours">
+          <h3>Hours</h3>
+          <p class="visit-days">{SITE.openDays}</p>
+          <dl>
+            {SITE.hours.map((h) => (
+              <div><dt>{h.label}</dt><dd>{h.value}</dd></div>
+            ))}
+          </dl>
+          <p class="closed">{SITE.closedDays} · Holiday hours may differ — please call or check our <a href={SITE.facebookUrl} target="_blank" rel="noopener">Facebook page</a>.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<script>
+  // Hide empty promo band; show the account band only when sign-in is available.
+  import { getConfig } from '../scripts/account.js';
+  const band = document.querySelector<HTMLElement>('[data-promo-band]');
+  if (band && !band.querySelector('.promo:not([hidden])')) band.hidden = true;
+  getConfig().then((c) => {
+    const join = document.querySelector<HTMLElement>('[data-open-signin-band]');
+    if (join) join.hidden = !(c.google_client_id || c.apple_services_id || c.facebook_app_id);
+  });
+</script>
+
+<style>
+  .hero {
+    background:
+      radial-gradient(circle at 85% 20%, rgb(200 149 43 / 0.22), transparent 40%),
+      radial-gradient(circle at 10% 90%, rgb(31 122 89 / 0.5), transparent 45%),
+      var(--jade-900);
+    color: #fff;
+    padding-block: clamp(48px, 9vw, 112px);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    /* subtle lattice motif */
+    content: ''; position: absolute; inset: 0; opacity: 0.07; pointer-events: none;
+    background-image: linear-gradient(45deg, #fff 1px, transparent 1px), linear-gradient(-45deg, #fff 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1.4fr 1fr; gap: clamp(32px, 6vw, 72px); align-items: center; }
+  .hero-eyebrow { color: var(--gold); }
+  .hero h1 { font-size: clamp(38px, 6vw, 64px); margin-top: 14px; max-width: 14ch; }
+  .hero-lede { margin-top: 18px; font-size: 18px; color: rgb(255 255 255 / 0.82); max-width: 46ch; }
+  .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+  .hero-note { margin-top: 14px; font-size: 14px; color: rgb(255 255 255 / 0.65); }
+  .hero-side { display: grid; gap: 16px; }
+  .hero-photo { margin: 0; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); aspect-ratio: 4 / 3; }
+  .hero-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .hours-card { position: relative; margin: -72px 0 0 32px; background: var(--cream); color: var(--ink); border-radius: var(--radius-lg); padding: 20px 22px; box-shadow: var(--shadow-lg); }
+  @media (max-width: 860px) { .hours-card { margin: -48px 12px 0; } }
+  .hours-card h2 { font-size: 22px; color: var(--jade-900); }
+  dl { margin: 14px 0 0; display: grid; gap: 8px; }
+  dl div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--line); padding-bottom: 8px; font-size: 15px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; font-weight: 600; text-align: right; }
+  .closed { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .phone { display: inline-block; margin-top: 14px; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--jade-800); text-decoration: none; }
+  @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } }
+
+  .promo-band { padding-top: clamp(32px, 5vw, 56px); }
+
+  .dish-grid { list-style: none; padding: 0; margin: 28px 0 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .dish { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; gap: 10px; transition: box-shadow 0.2s, transform 0.2s; overflow: hidden; }
+  .dish-img { margin: -20px -20px 6px; width: calc(100% + 40px); max-width: none; height: auto; aspect-ratio: 3 / 2; object-fit: cover; background: var(--jade-50); }
+  @media (max-width: 560px) {
+    .dish-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .dish { padding: 12px; gap: 6px; }
+    .dish-img { margin: -12px -12px 4px; width: calc(100% + 24px); }
+    .dish h3 { font-size: 17px; }
+    .dish-cat { display: none; }
+    .dish-bottom { flex-wrap: wrap; gap: 6px; }
+  }
+  .dish:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .dish-top { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+  .dish-code { background: var(--jade-50); color: var(--jade-800); font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+  .dish-cat { color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .dish h3 { font-size: 21px; flex: 1; }
+  .dish-bottom { display: flex; justify-content: space-between; align-items: center; }
+  .dish-price { font-weight: 800; font-size: 17px; }
+  .dish-add { font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: 999px; background: var(--jade-50); color: var(--jade-800); }
+  .dish-add:hover { background: var(--jade-800); color: #fff; }
+
+  .join { background: var(--gold-soft); border-block: 1px solid #ecd9ae; }
+  .join-inner { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; padding-block: 32px; }
+  .join h2 { font-size: 26px; color: var(--jade-900); }
+  .join p { color: var(--muted); max-width: 60ch; margin-top: 6px; }
+
+  .about { background: var(--paper); border-block: 1px solid var(--line); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: clamp(24px, 5vw, 64px); }
+  .about-copy { display: grid; gap: 16px; font-size: 17px; color: #3b3833; align-content: start; }
+  .about-lead { font-size: 19px; }
+  .story-photos { grid-column: 1 / -1; display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 220px 220px; gap: 12px; }
+  .story-photos img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); }
+  .story-0 { grid-row: span 2; }
+  .story-1 { grid-column: span 2; }
+  @media (max-width: 760px) {
+    .story-photos { grid-template-columns: 1fr 1fr; grid-template-rows: 200px 140px 140px; }
+    .story-0 { grid-row: auto; grid-column: span 2; }
+    .story-1 { grid-column: auto; }
+  }
+  .gp-head { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+  .gp-grid { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+  .gp-grid img { width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius); transition: transform 0.25s, filter 0.25s; }
+  .gp-grid a:hover img { transform: scale(1.02); filter: saturate(1.1); }
+  @media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; } }
+
+  .visit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(24px, 5vw, 64px); align-items: start; }
+  address { font-style: normal; font-size: 20px; margin-top: 16px; line-height: 1.5; }
+  .visit-hours { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px; }
+  .visit-hours h3 { font-size: 22px; }
+  .visit-days { font-weight: 700; margin-top: 4px; color: var(--jade-800); }
+  @media (max-width: 760px) { .visit-grid { grid-template-columns: 1fr; } }
+</style>

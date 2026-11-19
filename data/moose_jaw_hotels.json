@@ -1,0 +1,20 @@
+{
+  "_about": "Hotels and motels in Moose Jaw for the POS delivery-address picker (/api/streets → hotels). Compiled 2026-11-17 from booking/listing sites (Kayak, hotelguides.com, travelagewest.com, Choice Hotels); owner to confirm. Edit freely: name + street address only.",
+  "hotels": [
+    { "name": "Temple Gardens Hotel & Spa", "address": "24 Fairford St E", "type": "Hotel" },
+    { "name": "Grant Hall Hotel", "address": "401 Main St N", "type": "Hotel" },
+    { "name": "Heritage Inn Hotel & Convention Centre", "address": "1590 Main St N", "type": "Hotel" },
+    { "name": "Super 8 by Wyndham", "address": "1706 Main St N", "type": "Hotel" },
+    { "name": "Days Inn by Wyndham", "address": "1720 Main St N", "type": "Hotel" },
+    { "name": "Travelodge by Wyndham", "address": "45 Athabasca St E", "type": "Hotel" },
+    { "name": "Comfort Inn & Suites", "address": "155 Thatcher Dr W", "type": "Hotel" },
+    { "name": "Holiday Inn Express & Suites", "address": "195 Diefenbaker Dr", "type": "Hotel" },
+    { "name": "Quality Inn & Suites", "address": "323 Diefenbaker Dr", "type": "Hotel" },
+    { "name": "Best Western Plus Moose Jaw", "address": "350 Diefenbaker Dr", "type": "Hotel" },
+    { "name": "Ramada by Wyndham", "address": "379 Diefenbaker Dr", "type": "Hotel" },
+    { "name": "Moose Jaw Inn", "address": "45 North Service Rd", "type": "Motel" },
+    { "name": "Capone's Hideaway Motel", "address": "1 Main St N", "type": "Motel" },
+    { "name": "Dreamland Motel", "address": "1035 Athabasca St E", "type": "Motel" },
+    { "name": "Thriftlodge", "address": "Highway 1 East", "type": "Motel" }
+  ]
+}

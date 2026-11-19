@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found" showAnnouncement={false}>
+  <main class="container section" style="text-align:center;display:grid;gap:16px;justify-items:center">
+    <p class="eyebrow">404</p>
+    <h1 class="section-title">We couldn't find that page</h1>
+    <p class="lede">It may have moved when we rebuilt our website.</p>
+    <p style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <a class="btn btn-primary" href="/order/">Order online</a>
+      <a class="btn btn-ghost" href="/">Home</a>
+    </p>
+  </main>
+</Base>

@@ -1,0 +1,35 @@
+---
+// Required by Google / Apple / Facebook sign-in app review. Have the owner review before launch.
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site.js';
+---
+<Base title="Privacy Policy" showAnnouncement={false}>
+  <main class="container section privacy">
+    <p class="eyebrow">Last updated October 2026</p>
+    <h1 class="section-title">Privacy policy</h1>
+
+    <h2>What we collect</h2>
+    <p>When you order online we collect your name, phone number, email address, delivery address (for delivery orders), order notes and what you ordered. If you sign in with Google, Apple or Facebook, we receive your name and email address from that service. We never receive your password. Card payments are processed by Clover on its own secure page; we never see or store your card number.</p>
+
+    <h2>How we use it</h2>
+    <p>We use your information to prepare and deliver your order, contact you about it, remember your details for faster checkout, and keep records required for accounting and taxes.</p>
+
+    <h2>Marketing emails</h2>
+    <p>We only send offers and news if you tick the opt-in box. Every marketing email includes an unsubscribe link, and you can also ask us to stop at any time.</p>
+
+    <h2>Sharing</h2>
+    <p>We do not sell your information. It is stored with our hosting provider (Cloudflare) and is only shared where needed to fulfil your order or comply with the law.</p>
+
+    <h2>Your choices</h2>
+    <p>To see, correct or delete your information, email <a href={`mailto:${SITE.email}`}>{SITE.email}</a> or call <a href={SITE.phoneHref}>{SITE.phone}</a>.</p>
+
+    <h2>Contact</h2>
+    <p>{SITE.name}, {SITE.address.street}, {SITE.address.city}, {SITE.address.region} {SITE.address.postalCode}.</p>
+  </main>
+</Base>
+
+<style>
+  .privacy { max-width: 760px; display: grid; gap: 14px; }
+  .privacy h2 { font-size: 22px; margin-top: 18px; }
+  .privacy p { color: #3b3833; }
+</style>

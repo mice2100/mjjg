@@ -1,0 +1,253 @@
+---
+// Online ordering. The menu is rendered at build time from data/menu.json (fast + indexable);
+// the cart (scripts/order.js) asks the Worker for authoritative totals via /api/quote.
+import Base from '../layouts/Base.astro';
+import PromoSlot from '../components/PromoSlot.astro';
+import { SITE, MENU, displayName, formatPrice } from '../data/site.js';
+
+const categories = [...new Set(MENU.map((m) => m.category))].map((name, i) => ({
+  name,
+  slug: `cat-${i}`,
+  items: MENU.filter((m) => m.category === name),
+}));
+const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayName(m), price: m.price, category: m.category }));
+---
+<Base title="Order Online" description={`Order Chinese food online from ${SITE.name} in Moose Jaw for pickup or delivery.`}>
+  <main class="order-page">
+    <div class="container order-head">
+      <div>
+        <p class="eyebrow">Online ordering</p>
+        <h1>Our menu</h1>
+        <p class="lede">Pickup is free. Delivery anywhere in Moose Jaw is {formatPrice(SITE.deliveryFee)}. Prices in CAD, before GST/PST.</p>
+      </div>
+      <label class="search">
+        <span class="visually-hidden">Search the menu</span>
+        <input type="search" placeholder="Search dishes or codes (e.g. B8, ginger beef)" data-search autocomplete="off" />
+      </label>
+    </div>
+
+    <nav class="cat-bar" aria-label="Menu categories">
+      <div class="container cat-scroll">
+        {categories.map((c) => <a href={`#${c.slug}`} data-cat-link={c.slug}>{c.name}</a>)}
+      </div>
+    </nav>
+
+    <div class="container order-grid">
+      <div class="menu-col">
+        <!-- PROMOTION SLOT "order-banner" -->
+        <PromoSlot placement="order-banner" limit={1} />
+
+        {categories.map((c) => (
+          <section class="menu-cat" id={c.slug} data-cat>
+            <h2>{c.name}</h2>
+            <ul class="menu-list">
+              {c.items.map((item) => (
+                <li class="menu-item" data-item={item.id}>
+                  {item.image
+                    ? <img class="mi-img" src={item.image.replace('.webp', '-sm.webp')} alt="" loading="lazy" width="72" height="72" />
+                    : <span class="mi-img mi-img--none" aria-hidden="true"></span>}
+                  <div class="mi-text">
+                    {item.code && <span class="mi-code">{item.code}</span>}
+                    <span class="mi-name">{displayName(item)}</span>
+                  </div>
+                  <span class="mi-price">{formatPrice(item.price)}</span>
+                  <button type="button" class="mi-add" data-add={item.id} aria-label={`Add ${displayName(item)}`}>Add</button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+        <p class="no-results" data-no-results hidden>No dishes match your search.</p>
+      </div>
+
+      <!-- CART / CHECKOUT -->
+      <aside class="cart" data-cart aria-label="Your order">
+        <div class="cart-inner">
+          <div class="cart-header">
+            <h2>Your order</h2>
+            <button type="button" class="cart-close" data-cart-close aria-label="Close order">×</button>
+          </div>
+
+          <!-- Step 1: cart -->
+          <div data-step="cart">
+            <div class="seg" role="radiogroup" aria-label="Pickup or delivery">
+              <button type="button" role="radio" data-type="pickup">Pickup</button>
+              <button type="button" role="radio" data-type="delivery">Delivery · {formatPrice(SITE.deliveryFee)}</button>
+            </div>
+            <ul class="cart-lines" data-lines></ul>
+            <p class="cart-empty" data-empty>Your order is empty. Add dishes from the menu.</p>
+
+            <form class="coupon" data-coupon-form>
+              <label class="visually-hidden" for="coupon-input">Promo code</label>
+              <input id="coupon-input" name="code" placeholder="Promo code" autocomplete="off" />
+              <button type="submit" class="btn btn-ghost">Apply</button>
+            </form>
+            <p class="coupon-msg" data-coupon-msg hidden></p>
+
+            <dl class="totals" data-totals></dl>
+            <button type="button" class="btn btn-primary btn-block" data-to-checkout disabled>Checkout</button>
+          </div>
+
+          <!-- Step 2: details -->
+          <form data-step="checkout" class="checkout" hidden novalidate>
+            <button type="button" class="back" data-back>← Back to order</button>
+            <p class="signin-nudge" data-open-signin hidden>
+              <button type="button" class="linklike">Sign in</button> to fill in your details automatically.
+            </p>
+            <div class="field"><label for="f-name">Name</label><input id="f-name" name="customer_name" autocomplete="name" required /></div>
+            <div class="field"><label for="f-phone">Phone</label><input id="f-phone" name="customer_phone" type="tel" autocomplete="tel" required placeholder="306-555-0123" /></div>
+            <div class="field">
+              <label for="f-email">Email</label>
+              <input id="f-email" name="customer_email" type="email" autocomplete="email" required />
+              <span class="hint">For your order confirmation.</span>
+            </div>
+            <div class="field address-field" data-address-field hidden>
+              <label for="f-address">Delivery address (Moose Jaw)</label>
+              <input id="f-address" name="delivery_address" autocomplete="street-address" placeholder="House # and street, e.g. 740 thatcher"
+                role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="street-list" />
+              <ul class="street-list" id="street-list" role="listbox" aria-label="Matching streets" data-street-list hidden></ul>
+            </div>
+            <div class="field"><label for="f-notes">Notes for the kitchen (optional)</label><textarea id="f-notes" name="customer_notes" rows="2" maxlength="500"></textarea></div>
+            <label class="check"><input type="checkbox" name="marketing_opt_in" /> <span>Email me about new dishes and special offers from Jade Garden. You can unsubscribe at any time.</span></label>
+            <fieldset class="tips">
+              <legend>Add a tip for our team</legend>
+              <div class="tip-grid" role="radiogroup" aria-label="Tip">
+                <button type="button" role="radio" data-tip="none"><span>No tip</span><small data-tip-amount></small></button>
+                <button type="button" role="radio" data-tip="5"><span>5%</span><small data-tip-amount></small></button>
+                <button type="button" role="radio" data-tip="10"><span>10%</span><small data-tip-amount></small></button>
+                <button type="button" role="radio" data-tip="15"><span>15%</span><small data-tip-amount></small></button>
+                <button type="button" role="radio" data-tip="round"><span>Round up</span><small data-tip-amount></small></button>
+              </div>
+            </fieldset>
+            <div data-turnstile></div>
+            <dl class="totals" data-totals></dl>
+            <p class="pay-note" data-pay-note>You’ll pay securely by card on the next page (Clover).</p>
+            <p class="form-error" role="alert" data-form-error hidden></p>
+            <button type="submit" class="btn btn-primary btn-block" data-place-order>Continue to payment</button>
+          </form>
+
+          <!-- Step 3: confirmation -->
+          <div data-step="done" class="done" hidden>
+            <p class="eyebrow" data-done-eyebrow>Thank you!</p>
+            <h2 data-done-title>Order <span data-order-id></span> received</h2>
+            <p data-done-text></p>
+            <p>Questions? Call <a href={SITE.phoneHref}>{SITE.phone}</a>.</p>
+            <button type="button" class="btn btn-ghost" data-new-order>Start a new order</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Mobile cart bar -->
+    <button type="button" class="cart-bar" data-cart-open hidden>
+      <span data-bar-count></span><span>View order</span><span data-bar-total></span>
+    </button>
+  </main>
+  <script type="application/json" id="menu-data" set:html={JSON.stringify(menuForClient)} />
+</Base>
+
+<script>
+  import { initOrderPage } from '../scripts/order.js';
+  initOrderPage();
+</script>
+
+<style is:global>
+  /* Global (not scoped): cart lines and totals are created by scripts/order.js. */
+  .order-page { padding-bottom: 96px; }
+  .order-head { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-end; justify-content: space-between; padding-block: 36px 20px; }
+  .order-head h1 { font-size: clamp(34px, 5vw, 48px); }
+  .search input { width: min(420px, 100%); min-height: 46px; padding: 10px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--paper); }
+  .search { flex: 1 1 280px; display: flex; justify-content: flex-end; }
+  .cat-bar { position: sticky; top: 68px; z-index: 30; background: var(--cream); border-bottom: 1px solid var(--line); }
+  .cat-scroll { display: flex; gap: 8px; overflow-x: auto; padding-block: 10px; scrollbar-width: none; }
+  .cat-scroll a { flex: none; padding: 6px 14px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); text-decoration: none; color: var(--ink); font-size: 14px; font-weight: 600; white-space: nowrap; }
+  .cat-scroll a:hover { border-color: var(--jade-600); }
+
+  .order-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; align-items: start; padding-top: 24px; }
+  .menu-col { display: grid; gap: 28px; min-width: 0; }
+  .menu-cat h2 { font-size: 26px; margin-bottom: 10px; }
+  .menu-list { list-style: none; margin: 0; padding: 0; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+  .menu-item { display: grid; grid-template-columns: 72px 1fr auto auto; gap: 14px; align-items: center; padding: 12px 18px 12px 12px; border-top: 1px solid var(--line); }
+  .mi-img { width: 72px; height: 72px; border-radius: 8px; object-fit: cover; background: var(--jade-50); }
+  /* No photo yet: quiet brand ring instead of an empty box. */
+  .mi-img--none { background: radial-gradient(circle, var(--jade-100) 0 6px, transparent 7px), radial-gradient(circle, transparent 0 13px, var(--jade-100) 14px 17px, transparent 18px), var(--jade-50); }
+  .menu-item:first-child { border-top: none; }
+  .mi-text { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+  .mi-code { flex: none; font-size: 12px; font-weight: 800; color: var(--jade-800); background: var(--jade-50); padding: 1px 7px; border-radius: 5px; }
+  .mi-name { font-weight: 600; }
+  .mi-price { font-weight: 700; font-variant-numeric: tabular-nums; }
+  .mi-add { min-height: 40px; min-width: 64px; border-radius: 999px; border: 1.5px solid var(--jade-600); background: var(--paper); color: var(--jade-800); font-weight: 700; cursor: pointer; }
+  .mi-add:hover { background: var(--jade-800); color: #fff; }
+  .mi-add.in-cart { background: var(--jade-800); color: #fff; }
+  .no-results { color: var(--muted); }
+  .menu-item mark, .street-list mark { background: var(--gold-soft); color: inherit; border-radius: 2px; }
+
+  .address-field { position: relative; }
+  .street-list { position: absolute; z-index: 5; left: 0; right: 0; top: 100%; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-lg); }
+  .street-list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 15px; }
+  .street-list li[aria-selected='true'] { background: var(--jade-50); }
+  .street-list .st-house { font-weight: 700; }
+  .street-list .st-tag { flex: none; font-size: 12px; color: var(--muted); align-self: center; }
+
+  .cart { position: sticky; top: 132px; }
+  .cart-inner { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); max-height: calc(100vh - 150px); overflow-y: auto; display: grid; gap: 14px; }
+  .cart-header { display: flex; justify-content: space-between; align-items: center; }
+  .cart-header h2 { font-size: 24px; }
+  .cart-close { display: none; width: 40px; height: 40px; border: none; background: none; font-size: 26px; cursor: pointer; }
+  [data-step] { display: grid; gap: 14px; }
+  [data-step][hidden] { display: none; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--cream); border-radius: 999px; padding: 4px; }
+  .seg button { min-height: 40px; border: none; border-radius: 999px; background: none; font-weight: 700; font-size: 14px; cursor: pointer; color: var(--muted); }
+  .seg button[aria-checked='true'] { background: var(--paper); color: var(--jade-900); box-shadow: var(--shadow); }
+  .cart-lines { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .cart-line { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; font-size: 15px; }
+  .qty { display: inline-flex; align-items: center; gap: 6px; }
+  .qty button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--paper); cursor: pointer; font-weight: 700; }
+  .line-price { font-variant-numeric: tabular-nums; font-weight: 600; min-width: 64px; text-align: right; }
+  .cart-empty { color: var(--muted); font-size: 15px; }
+  .coupon { display: flex; gap: 8px; }
+  .coupon input { flex: 1; min-height: 44px; padding: 8px 12px; border-radius: var(--radius); border: 1.5px solid var(--line); text-transform: uppercase; min-width: 0; }
+  .coupon-msg { font-size: 14px; }
+  .coupon-msg.ok { color: var(--jade-600); }
+  .coupon-msg.err { color: var(--lacquer); }
+  .totals { margin: 0; display: grid; gap: 6px; font-size: 15px; }
+  .totals div { display: flex; justify-content: space-between; }
+  .totals dt { color: var(--muted); }
+  .totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .totals .discount dd { color: var(--lacquer); }
+  .totals .grand { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; font-size: 18px; font-weight: 800; }
+  .totals .grand dt { color: var(--ink); }
+  .checkout .back, .linklike { background: none; border: none; padding: 0; color: var(--jade-800); font-weight: 700; cursor: pointer; justify-self: start; text-decoration: underline; }
+  .signin-nudge { font-size: 14px; color: var(--muted); }
+  .pay-note { font-size: 13px; color: var(--muted); }
+  .tips { border: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .tips legend { padding: 0; margin-bottom: 8px; font-weight: 700; font-size: 15px; }
+  .tip-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .tip-grid button { display: grid; gap: 2px; justify-items: center; align-content: center; min-height: 52px; padding: 6px 2px; border-radius: var(--radius); border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .tip-grid button small { font-weight: 500; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1em; }
+  .tip-grid button:hover { border-color: var(--jade-600); }
+  .tip-grid button[aria-checked='true'] { background: var(--jade-800); border-color: var(--jade-800); color: #fff; }
+  .tip-grid button[aria-checked='true'] small { color: rgb(255 255 255 / 0.8); }
+  @media (max-width: 380px) { .tip-grid { grid-template-columns: repeat(3, 1fr); } }
+  .form-error { color: var(--lacquer); font-weight: 600; }
+  .done h2 { font-size: 26px; }
+
+  .cart-bar { display: none; }
+  @media (max-width: 960px) {
+    .order-grid { grid-template-columns: 1fr; }
+    .cart { position: fixed; inset: 0; z-index: 60; background: rgb(14 59 44 / 0.45); display: none; align-items: flex-end; top: 0; }
+    .cart.open { display: flex; }
+    .cart-inner { width: 100%; max-height: 88vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+    .cart-close { display: block; }
+    .cart-bar:not([hidden]) {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; position: fixed; z-index: 50;
+      left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); min-height: 56px; padding: 0 20px;
+      border: none; border-radius: 999px; background: var(--jade-800); color: #fff; font-weight: 700; font-size: 16px; box-shadow: var(--shadow-lg); cursor: pointer;
+    }
+    .menu-item { grid-template-columns: 64px 1fr auto; column-gap: 12px; row-gap: 2px; }
+    .mi-img { width: 64px; height: 64px; grid-row: span 2; }
+    .mi-text { align-self: end; }
+    .mi-add { grid-row: 1 / span 2; grid-column: 3; }
+    .mi-price { grid-column: 2; align-self: start; font-size: 14px; color: var(--muted); }
+  }
+</style>

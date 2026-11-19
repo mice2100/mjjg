@@ -1,0 +1,27 @@
+# Local development secrets for `wrangler dev`. Copy to .dev.vars (git-ignored).
+# Production: `wrangler secret put <NAME>` for each of these.
+ENVIRONMENT=development
+
+# WooCommerce REST API (Read-only key is enough; rotate any key that was ever committed)
+WC_CONSUMER_KEY=ck_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+WC_CONSUMER_SECRET=cs_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# Secret configured on the WooCommerce webhook (Settings > Advanced > Webhooks)
+WC_WEBHOOK_SECRET=change-me
+
+# Signs customer session cookies. Use a long random string: `openssl rand -base64 32`
+SESSION_SECRET=dev-only-session-secret-change-me
+
+# Facebook Login server-side token check
+FACEBOOK_APP_SECRET=
+
+# Cloudflare Turnstile (anti-spam on public order form). Leave empty to disable locally.
+TURNSTILE_SECRET_KEY=
+
+# Clover Hosted Checkout (online payment). Leave CLOVER_PRIVATE_KEY empty to test locally with
+# pay-at-pickup instead. Sandbox keys come from a sandbox.dev.clover.com test merchant.
+CLOVER_ENV=sandbox
+CLOVER_MERCHANT_ID=
+# Ecommerce private token (Merchant Dashboard > Account & Setup > Ecommerce API Tokens)
+CLOVER_PRIVATE_KEY=
+# Signing Secret from Hosted Checkout settings > Webhook
+CLOVER_WEBHOOK_SECRET=

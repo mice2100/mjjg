@@ -1,0 +1,31 @@
+---
+import { SITE } from '../data/site.js';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <h3>Jade Garden</h3>
+        <p>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postalCode}</p>
+        <p style="margin-top:8px"><a href={SITE.mapsUrl} target="_blank" rel="noopener">Get directions</a></p>
+      </div>
+      <div>
+        <h3>Hours</h3>
+        <p>{SITE.openDays}</p>
+        {SITE.hours.map((h) => <p>{h.label}: {h.value}</p>)}
+        <p>{SITE.closedDays}</p>
+      </div>
+      <div>
+        <h3>Contact</h3>
+        <p><a href={SITE.phoneHref}>{SITE.phone}</a></p>
+        <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+        <p><a href={SITE.facebookUrl} target="_blank" rel="noopener">Facebook</a></p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© {year} {SITE.name}. All rights reserved.</span>
+      <span><a href="/privacy/">Privacy policy</a></span>
+    </div>
+  </div>
+</footer>

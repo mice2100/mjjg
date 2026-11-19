@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+web/dist/
+web/.astro/
+
+# Cloudflare Wrangler local state & storage
+.wrangler/
+
+# Secrets
+.env
+.dev.vars
+
+# System files
+.DS_Store
+Thumbs.db
+*.log
+__pycache__/
+
+# Old-site image import (tools/import_old_site_images.py): download cache + reference archive
+.cache/
+assets/old-site-webp/
+
+# Deploy (scripts/deploy.sh): Cloudflare credentials, production secrets, D1 backups
+.deploy.env
+.prod.vars
+backups/

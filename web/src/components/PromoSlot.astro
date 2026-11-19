@@ -1,0 +1,78 @@
+---
+// Renders live promotions for one placement. Renders NOTHING when there are none,
+// so every page looks complete without promotions.
+// Date windows are applied at build time AND re-checked in the browser, so a
+// promotion appears/disappears on time even if the site isn't rebuilt that day.
+import { getCollection, render } from 'astro:content';
+
+const { placement, limit = 3 } = Astro.props;
+const now = new Date();
+const entries = (await getCollection('promotions', ({ data }) => data.placement === placement && !(data.ends_at && data.ends_at <= now)))
+  .sort((a, b) => b.data.priority - a.data.priority)
+  .slice(0, limit);
+const promos = await Promise.all(entries.map(async (entry) => ({ data: entry.data, Content: (await render(entry)).Content })));
+---
+{promos.length > 0 && (
+  <div class={`promo-slot promo-slot--${placement}`} data-promo-slot>
+    {promos.map(({ data: d, Content }) => (
+        <article
+          class={`promo promo--${placement}`}
+          data-starts-at={d.starts_at?.toISOString()}
+          data-ends-at={d.ends_at?.toISOString()}
+          hidden={d.starts_at && d.starts_at > now ? true : undefined}
+        >
+          <h3 class="promo-title">{d.title}</h3>
+          <div class="promo-body"><Content /></div>
+          {(d.coupon_code || d.cta_href) && (
+            <div class="promo-actions">
+              {d.coupon_code && <span class="promo-code">{d.coupon_code}</span>}
+              {d.cta_href && <a class="promo-cta" href={d.cta_href}>{d.cta_label || 'Learn more'} →</a>}
+            </div>
+          )}
+        </article>
+    ))}
+  </div>
+)}
+
+<script>
+  const now = Date.now();
+  document.querySelectorAll<HTMLElement>('[data-promo-slot] .promo').forEach((el) => {
+    const start = el.dataset.startsAt ? Date.parse(el.dataset.startsAt) : -Infinity;
+    const end = el.dataset.endsAt ? Date.parse(el.dataset.endsAt) : Infinity;
+    el.hidden = !(now >= start && now < end);
+  });
+  document.querySelectorAll<HTMLElement>('[data-promo-slot]').forEach((slot) => {
+    slot.hidden = !slot.querySelector('.promo:not([hidden])');
+  });
+</script>
+
+<style>
+  .promo-slot--announcement .promo {
+    background: var(--jade-900); color: #fff; text-align: center; padding: 9px var(--gutter); font-size: 14px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px;
+  }
+  .promo-slot--announcement .promo-title { font: inherit; font-weight: 700; color: #fff; padding: 0; }
+  .promo-slot--announcement .promo-actions { margin: 0; }
+  .promo-slot--announcement .promo-code { color: var(--gold-soft); }
+  .promo-slot--announcement .promo-body { display: none; }
+  .promo-slot--announcement :global(.promo-cta) { color: var(--gold-soft); }
+
+  .promo-slot--hero .promo, .promo-slot--home-feature .promo, .promo-slot--order-banner .promo {
+    background: var(--paper); border: 1.5px solid var(--gold); border-radius: var(--radius-lg); padding: 22px;
+    position: relative; overflow: hidden;
+  }
+  .promo-slot--hero .promo::before, .promo-slot--home-feature .promo::before {
+    content: 'Offer'; position: absolute; top: 14px; right: -30px; transform: rotate(35deg);
+    background: var(--lacquer); color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 3px 34px;
+  }
+  .promo-slot--home-feature {
+    display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .promo-slot--order-banner .promo { padding: 14px 18px; border-style: dashed; }
+  .promo-title { font-size: 20px; color: var(--jade-900); padding-right: 36px; }
+  .promo-body { color: var(--muted); margin-top: 6px; font-size: 15px; }
+  .promo-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 14px; }
+  .promo-code { color: var(--lacquer); }
+  .promo-cta { font-weight: 700; color: var(--jade-800); }
+</style>

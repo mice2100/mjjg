@@ -1,0 +1,28 @@
+{
+  "name": "jadegarden",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jade Garden (Moose Jaw) - customer website, staff POS/kitchen, and order API on one Cloudflare Worker + D1",
+  "scripts": {
+    "build": "astro build --root web",
+    "dev": "npm run build && wrangler dev",
+    "dev:web": "astro dev --root web",
+    "db:migrate": "wrangler d1 migrations apply jadegarden-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply jadegarden-db --remote",
+    "db:seed": "wrangler d1 execute jadegarden-db --local --file=seed/dev.sql",
+    "cron:local": "curl -s \"http://localhost:8787/cdn-cgi/local/scheduled?cron=*+*+*+*+*\"",
+    "test": "node --test \"worker/**/*.test.js\" \"web/src/**/*.test.js\"",
+    "deploy": "bash scripts/deploy.sh",
+    "deploy:setup": "bash scripts/deploy.sh setup",
+    "deploy:status": "bash scripts/deploy.sh status",
+    "deploy:rollback": "bash scripts/deploy.sh rollback"
+  },
+  "dependencies": {
+    "jose": "6.2.12"
+  },
+  "devDependencies": {
+    "astro": "7.3.5",
+    "wrangler": "4.147.0"
+  }
+}

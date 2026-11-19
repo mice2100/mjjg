@@ -1,0 +1,56 @@
+// One Worker serves everything:
+//   * static assets built by Astro (web/dist): customer site + /staff/ app
+//   * /api/*  -> worker/index.js fetch handler (D1-backed API)
+//   * cron    -> worker/index.js scheduled handler (expire unpaid checkouts, WooCommerce -> D1 sync)
+// Secrets are NOT stored here. Set them with `wrangler secret put <NAME>` (prod)
+// or in .dev.vars (local). See .dev.vars.example.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jadegarden",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jadegarden-db",
+      // Replace with the real id from `wrangler d1 create jadegarden-db` before the first deploy.
+      "database_id": "d4575670-4ca0-4b1f-9e3e-60bb3d4a8ed7",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // Test host during dual-run. wrangler creates the DNS record and certificate on deploy.
+  // workers_dev stays on: the Access app and webhooks also use the workers.dev host.
+  "routes": [{ "pattern": "jg.moosephotoprint.com", "custom_domain": true }],
+  "workers_dev": true,
+  "triggers": {
+    // Every minute: expire abandoned Clover checkouts (releases their coupons) and pull
+    // new/changed WooCommerce orders into D1. Keep it after the WordPress site is retired;
+    // only the WooCommerce part goes away.
+    "crons": ["* * * * *"]
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "PUBLIC_SITE_URL": "https://mjjadegarden.com",
+    "WC_STORE_URL": "https://mjjadegarden.com",
+    "GOOGLE_CLIENT_ID": "",
+    "APPLE_SERVICES_ID": "",
+    "FACEBOOK_APP_ID": "",
+    "TURNSTILE_SITE_KEY": "",
+    "ACCESS_TEAM_DOMAIN": "bitter-grass-6f28.cloudflareaccess.com",
+    // Who may edit combo contents in the staff app (comma-separated Access emails). Empty = every staff member.
+    "ADMIN_EMAILS": "",
+    "ACCESS_AUD": "3b808a89acbdb653e3b3af288c3048e3e9ffdc21eb54b99984e131b6130e2f47",
+    // Clover Hosted Checkout. 'production' charges real cards; 'sandbox' uses apisandbox.dev.clover.com.
+    // CLOVER_MERCHANT_ID is the 13-character merchant UUID (Merchant Dashboard URL), not the numeric MID.
+    // Secrets: CLOVER_PRIVATE_KEY, CLOVER_WEBHOOK_SECRET. Without the key, web orders are refused in production.
+    "CLOVER_ENV": "sandbox", // test cards only; switch to "production" (and the live merchant id + keys) before cutover
+    "CLOVER_MERCHANT_ID": "H5D261GS53SJ1"
+  },
+  "observability": { "enabled": true }
+}

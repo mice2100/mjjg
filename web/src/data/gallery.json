@@ -1,0 +1,371 @@
+[
+  {
+    "src": "/images/site/storefront.webp",
+    "thumb": "/images/site/storefront-sm.webp",
+    "width": 900,
+    "height": 556,
+    "group": "room",
+    "alt": "Jade Garden storefront on Main Street North",
+    "slug": "storefront"
+  },
+  {
+    "src": "/images/site/exterior.webp",
+    "thumb": "/images/site/exterior-sm.webp",
+    "width": 1024,
+    "height": 636,
+    "group": "room",
+    "alt": "Jade Garden building in downtown Moose Jaw",
+    "slug": "exterior"
+  },
+  {
+    "src": "/images/site/dining-room.webp",
+    "thumb": "/images/site/dining-room-sm.webp",
+    "width": 1600,
+    "height": 917,
+    "group": "room",
+    "alt": "Dining room with banquet tables set for guests",
+    "slug": "dining-room"
+  },
+  {
+    "src": "/images/site/dining-room-2.webp",
+    "thumb": "/images/site/dining-room-2-sm.webp",
+    "width": 1600,
+    "height": 958,
+    "group": "room",
+    "alt": "Bright dining room with large windows",
+    "slug": "dining-room-2"
+  },
+  {
+    "src": "/images/site/dining-room-3.webp",
+    "thumb": "/images/site/dining-room-3-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "room",
+    "alt": "Round tables with lazy Susans for family-style meals",
+    "slug": "dining-room-3"
+  },
+  {
+    "src": "/images/site/dining-room-4.webp",
+    "thumb": "/images/site/dining-room-4-sm.webp",
+    "width": 1600,
+    "height": 1042,
+    "group": "room",
+    "alt": "Main dining room and buffet area",
+    "slug": "dining-room-4"
+  },
+  {
+    "src": "/images/site/banquet-table.webp",
+    "thumb": "/images/site/banquet-table-sm.webp",
+    "width": 1600,
+    "height": 955,
+    "group": "room",
+    "alt": "Banquet table set with a red flower centrepiece",
+    "slug": "banquet-table"
+  },
+  {
+    "src": "/images/site/banquet-room.webp",
+    "thumb": "/images/site/banquet-room-sm.webp",
+    "width": 1024,
+    "height": 636,
+    "group": "room",
+    "alt": "Banquet room with round tables",
+    "slug": "banquet-room"
+  },
+  {
+    "src": "/images/site/dining-room-5.webp",
+    "thumb": "/images/site/dining-room-5-sm.webp",
+    "width": 1024,
+    "height": 636,
+    "group": "room",
+    "alt": "Dining room seating",
+    "slug": "dining-room-5"
+  },
+  {
+    "src": "/images/site/bar.webp",
+    "thumb": "/images/site/bar-sm.webp",
+    "width": 1600,
+    "height": 1115,
+    "group": "room",
+    "alt": "Licensed bar with a full selection of drinks",
+    "slug": "bar"
+  },
+  {
+    "src": "/images/site/bar-2.webp",
+    "thumb": "/images/site/bar-2-sm.webp",
+    "width": 1600,
+    "height": 1119,
+    "group": "room",
+    "alt": "Bar counter decorated for good fortune",
+    "slug": "bar-2"
+  },
+  {
+    "src": "/images/site/decor.webp",
+    "thumb": "/images/site/decor-sm.webp",
+    "width": 1600,
+    "height": 1148,
+    "group": "room",
+    "alt": "Tea set and traditional decor",
+    "slug": "decor"
+  },
+  {
+    "src": "/images/site/table-flowers.webp",
+    "thumb": "/images/site/table-flowers-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "room",
+    "alt": "Poinsettia centrepiece on a dining table",
+    "slug": "table-flowers"
+  },
+  {
+    "src": "/images/site/holiday-dining.webp",
+    "thumb": "/images/site/holiday-dining-sm.webp",
+    "width": 1350,
+    "height": 1800,
+    "group": "room",
+    "alt": "Dining room decorated for the holidays",
+    "slug": "holiday-dining"
+  },
+  {
+    "src": "/images/site/holiday-flowers.webp",
+    "thumb": "/images/site/holiday-flowers-sm.webp",
+    "width": 1350,
+    "height": 1800,
+    "group": "room",
+    "alt": "Holiday poinsettia by the window",
+    "slug": "holiday-flowers"
+  },
+  {
+    "src": "/images/site/buffet.webp",
+    "thumb": "/images/site/buffet-sm.webp",
+    "width": 1600,
+    "height": 1051,
+    "group": "buffet",
+    "alt": "Hot buffet line",
+    "slug": "buffet"
+  },
+  {
+    "src": "/images/site/buffet-2.webp",
+    "thumb": "/images/site/buffet-2-sm.webp",
+    "width": 1600,
+    "height": 1178,
+    "group": "buffet",
+    "alt": "Wonton soup and crispy wontons on the buffet",
+    "slug": "buffet-2"
+  },
+  {
+    "src": "/images/site/buffet-3.webp",
+    "thumb": "/images/site/buffet-3-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "buffet",
+    "alt": "Spring rolls and fried chicken on the buffet",
+    "slug": "buffet-3"
+  },
+  {
+    "src": "/images/site/buffet-4.webp",
+    "thumb": "/images/site/buffet-4-sm.webp",
+    "width": 1600,
+    "height": 1054,
+    "group": "buffet",
+    "alt": "Sweet and sour chicken balls on the buffet",
+    "slug": "buffet-4"
+  },
+  {
+    "src": "/images/site/buffet-5.webp",
+    "thumb": "/images/site/buffet-5-sm.webp",
+    "width": 1600,
+    "height": 1016,
+    "group": "buffet",
+    "alt": "Chow mein and dumplings on the buffet",
+    "slug": "buffet-5"
+  },
+  {
+    "src": "/images/site/buffet-6.webp",
+    "thumb": "/images/site/buffet-6-sm.webp",
+    "width": 1600,
+    "height": 1064,
+    "group": "buffet",
+    "alt": "Dumplings and noodles on the buffet",
+    "slug": "buffet-6"
+  },
+  {
+    "src": "/images/site/buffet-desserts.webp",
+    "thumb": "/images/site/buffet-desserts-sm.webp",
+    "width": 1600,
+    "height": 1054,
+    "group": "buffet",
+    "alt": "Desserts on ice at the buffet",
+    "slug": "buffet-desserts"
+  },
+  {
+    "src": "/images/site/buffet-7.webp",
+    "thumb": "/images/site/buffet-7-sm.webp",
+    "width": 1300,
+    "height": 950,
+    "group": "buffet",
+    "alt": "Buffet trays with serving tongs",
+    "slug": "buffet-7"
+  },
+  {
+    "src": "/images/site/buffet-8.webp",
+    "thumb": "/images/site/buffet-8-sm.webp",
+    "width": 1300,
+    "height": 950,
+    "group": "buffet",
+    "alt": "Full buffet station",
+    "slug": "buffet-8"
+  },
+  {
+    "src": "/images/site/buffet-salad.webp",
+    "thumb": "/images/site/buffet-salad-sm.webp",
+    "width": 1800,
+    "height": 1350,
+    "group": "buffet",
+    "alt": "Salad and fruit bar",
+    "slug": "buffet-salad"
+  },
+  {
+    "src": "/images/site/hero-ginger-beef.webp",
+    "thumb": "/images/site/hero-ginger-beef-sm.webp",
+    "width": 1600,
+    "height": 1109,
+    "group": "food",
+    "alt": "Ginger beef with sauce being poured over it",
+    "slug": "hero-ginger-beef"
+  },
+  {
+    "src": "/images/site/food-shanghai-noodle.webp",
+    "thumb": "/images/site/food-shanghai-noodle-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "food",
+    "alt": "Beef Shanghai noodles lifted with chopsticks",
+    "slug": "food-shanghai-noodle"
+  },
+  {
+    "src": "/images/site/food-dumplings.webp",
+    "thumb": "/images/site/food-dumplings-sm.webp",
+    "width": 1600,
+    "height": 1031,
+    "group": "food",
+    "alt": "Pan-fried dumplings",
+    "slug": "food-dumplings"
+  },
+  {
+    "src": "/images/site/food-chili-oil.webp",
+    "thumb": "/images/site/food-chili-oil-sm.webp",
+    "width": 1600,
+    "height": 1194,
+    "group": "food",
+    "alt": "House-made chili oil",
+    "slug": "food-chili-oil"
+  },
+  {
+    "src": "/images/site/food-montreal-ribs.webp",
+    "thumb": "/images/site/food-montreal-ribs-sm.webp",
+    "width": 1600,
+    "height": 1172,
+    "group": "food",
+    "alt": "Spicy Montreal ribs",
+    "slug": "food-montreal-ribs"
+  },
+  {
+    "src": "/images/site/food-bbq-pork.webp",
+    "thumb": "/images/site/food-bbq-pork-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "food",
+    "alt": "BBQ pork tenderloin",
+    "slug": "food-bbq-pork"
+  },
+  {
+    "src": "/images/site/food-mantou.webp",
+    "thumb": "/images/site/food-mantou-sm.webp",
+    "width": 1600,
+    "height": 1160,
+    "group": "food",
+    "alt": "Deep-fried mantou with condensed milk",
+    "slug": "food-mantou"
+  },
+  {
+    "src": "/images/site/food-szechuan.webp",
+    "thumb": "/images/site/food-szechuan-sm.webp",
+    "width": 1600,
+    "height": 1109,
+    "group": "food",
+    "alt": "Spicy stir-fry with sauce",
+    "slug": "food-szechuan"
+  },
+  {
+    "src": "/images/site/food-kung-pao.webp",
+    "thumb": "/images/site/food-kung-pao-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "food",
+    "alt": "Kung pao chicken",
+    "slug": "food-kung-pao"
+  },
+  {
+    "src": "/images/site/food-seafood-veg.webp",
+    "thumb": "/images/site/food-seafood-veg-sm.webp",
+    "width": 1600,
+    "height": 1124,
+    "group": "food",
+    "alt": "Shrimp and scallops with broccoli",
+    "slug": "food-seafood-veg"
+  },
+  {
+    "src": "/images/site/food-singapore-noodle.webp",
+    "thumb": "/images/site/food-singapore-noodle-sm.webp",
+    "width": 1600,
+    "height": 1120,
+    "group": "food",
+    "alt": "Singapore fried rice noodles",
+    "slug": "food-singapore-noodle"
+  },
+  {
+    "src": "/images/site/food-crispy-chow-mein.webp",
+    "thumb": "/images/site/food-crispy-chow-mein-sm.webp",
+    "width": 1600,
+    "height": 994,
+    "group": "food",
+    "alt": "House special crispy chow mein",
+    "slug": "food-crispy-chow-mein"
+  },
+  {
+    "src": "/images/site/food-combo.webp",
+    "thumb": "/images/site/food-combo-sm.webp",
+    "width": 1600,
+    "height": 1047,
+    "group": "food",
+    "alt": "Combo plate with chicken balls, rice and spring roll",
+    "slug": "food-combo"
+  },
+  {
+    "src": "/images/site/food-wonton-soup.webp",
+    "thumb": "/images/site/food-wonton-soup-sm.webp",
+    "width": 1800,
+    "height": 1179,
+    "group": "food",
+    "alt": "War wonton soup with BBQ pork",
+    "slug": "food-wonton-soup"
+  },
+  {
+    "src": "/images/site/food-chicken-balls.webp",
+    "thumb": "/images/site/food-chicken-balls-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "food",
+    "alt": "Sweet and sour chicken balls",
+    "slug": "food-chicken-balls"
+  },
+  {
+    "src": "/images/site/food-egg-shrimp.webp",
+    "thumb": "/images/site/food-egg-shrimp-sm.webp",
+    "width": 1600,
+    "height": 1066,
+    "group": "food",
+    "alt": "Scrambled eggs with shrimp",
+    "slug": "food-egg-shrimp"
+  }
+]
