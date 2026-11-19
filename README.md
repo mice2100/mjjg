@@ -1,5 +1,7 @@
 # Jade Garden — Website, Online Ordering, POS & Kitchen
 
+**English** · [中文](README.zh.md)
+
 Jade Garden Restaurant (471 Main St N, Moose Jaw, SK) runs on **one Cloudflare Worker + one D1 database**:
 
 - **Customer website** (`/`, `/order/`, `/gallery/`, `/privacy/`): Astro static site with online ordering (pickup and delivery), coupons and optional Google/Apple/Facebook sign-in.
@@ -21,7 +23,7 @@ Jade Garden Restaurant (471 Main St N, Moose Jaw, SK) runs on **one Cloudflare W
 | Clover payments | **Sandbox only.** The previous keys were rejected (see §8). Production refuses web orders until real Clover keys are set |
 | Customer sign-in (Google/Apple/Facebook) | Not configured; the site works with guest checkout only |
 | Turnstile (bot protection) | Not configured |
-| Domain `mjjadegarden.com` | Moved to Cloudflare, but still points at the old WordPress site |
+| Domain `mjjadegarden.com` | Moved to Cloudflare, still points at the old WordPress site. Plan: stage on `w2.mjjadegarden.com`, move `www` later (§7) |
 | Photos / dish descriptions | Restaurant's own photos only; 67 dishes still have no photo |
 
 **Because the domain now lives in your Cloudflare account, deploy everything into that account.** Do not reuse the previous developer's D1 id, Access app or tokens; replace them as described in §4.
@@ -102,7 +104,7 @@ cp .deploy.env.example .deploy.env      # fill CLOUDFLARE_API_TOKEN and CLOUDFLA
 | Setting | What to do |
 |---|---|
 | `d1_databases[0].database_id` | `npm run deploy:setup` finds or creates `jadegarden-db` in your account and writes the new id for you |
-| `routes` | Currently the old test host `jg.moosephotoprint.com`. Replace with your test or final domain (see §7) |
+| `routes` | Currently the old test host `jg.moosephotoprint.com`. Replace with `w2.mjjadegarden.com` for the staged launch (see §7) |
 | `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | Replace with your own Zero Trust values (step 4.5) |
 | `CLOVER_MERCHANT_ID`, `CLOVER_ENV` | Your Clover merchant UUID and `sandbox` or `production` (step 4.6) |
 | `PUBLIC_SITE_URL`, `WC_STORE_URL` | `https://mjjadegarden.com` |
@@ -183,15 +185,26 @@ The full column list and a ready-to-edit example are in [AGENTS.md §7](AGENTS.m
 
 ---
 
-## 7. Cutover: moving `mjjadegarden.com` from WordPress to this site
+## 7. Launch plan: stage on `w2.mjjadegarden.com`, then move `www`
 
-1. Deploy to your account and test on the `workers.dev` host: place an order, pay it (sandbox), see it on `/staff/kitchen/`, mark it complete.
-2. Owner reviews copy, hours, prices, privacy text and photos on the test host.
-3. In `wrangler.jsonc` set `CLOVER_ENV` to `production` with the live merchant id, and set the live `CLOVER_PRIVATE_KEY` and `CLOVER_WEBHOOK_SECRET`.
-4. Attach the domain: set `routes` to `mjjadegarden.com` and `www.mjjadegarden.com` (both `custom_domain: true`), then `npm run deploy`. Wrangler creates the DNS records and certificates. **Remove the old WordPress DNS records first** (a custom domain cannot sit on top of an existing record).
-5. Update Access (add the new host), Turnstile (hostname), and both webhook URLs (Clover, WooCommerce) to the new host.
-6. Place a real $1 order, then refund it.
-7. After a few stable days: delete the WooCommerce part of `scheduled()`, `worker/services/woocommerce.js`, `worker/routes/webhooks.js` (WooCommerce handler only; **keep the Clover webhook and the cron**), and the `WC_*` secrets. Then shut down WordPress.
+The domain is already on Cloudflare, so we launch in two stages. WordPress keeps serving `www.mjjadegarden.com` and `mjjadegarden.com` until the new site has proven itself.
+
+**Stage 1: staging on `w2.mjjadegarden.com` (WordPress untouched)**
+
+1. In `wrangler.jsonc` set `routes` to `[{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }]`, then `npm run deploy`. Wrangler creates the DNS record and certificate. (`PUBLIC_SITE_URL` may stay `https://mjjadegarden.com`.)
+2. Add `w2.mjjadegarden.com` to the Access application (§4.5) and to the Turnstile widget hostnames.
+3. Set the Clover webhook to `https://w2.mjjadegarden.com/api/webhooks/clover` (and the WooCommerce webhooks to `https://w2.mjjadegarden.com/api/webhooks/woocommerce`).
+4. Keep `CLOVER_ENV` at `sandbox` while testing: place orders, pay with a test card, see them on `/staff/kitchen/`, mark them complete. The owner reviews copy, hours, prices, privacy text and photos here.
+5. Let staff use `https://w2.mjjadegarden.com/staff/pos/` and `/staff/kitchen/` for real (phone orders, WordPress orders imported by the cron). Run like this until it is stable.
+
+**Stage 2: go live on `www`**
+
+1. Set `CLOVER_ENV` to `production` with the live merchant id, `CLOVER_PRIVATE_KEY` and `CLOVER_WEBHOOK_SECRET`.
+2. In Cloudflare DNS **delete the WordPress records** for `www` and the apex (a custom domain cannot sit on top of an existing record). Do this at a quiet time: from here until the deploy finishes, the old site is down.
+3. Set `routes` to `www.mjjadegarden.com` and `mjjadegarden.com` (both `custom_domain: true`; keep `w2` too if you want it as a spare), then `npm run deploy`.
+4. Update the Access app, Turnstile hostnames, and the Clover and WooCommerce webhook URLs to the new host.
+5. Place a real $1 order and refund it in Clover.
+6. After a few stable days, clean up: delete the WooCommerce part of `scheduled()`, `worker/services/woocommerce.js`, the WooCommerce handler in `worker/routes/webhooks.js` (**keep the Clover webhook and the cron**) and the `WC_*` secrets, then shut down WordPress.
 
 Old WordPress URLs are redirected by `web/public/_redirects`.
 
