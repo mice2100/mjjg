@@ -51,6 +51,7 @@ Typing speed matters on a phone call, so search uses subsequence matching with s
 
 - **Buy:** Epson **TM-T88VI / TM-T88VII** (or Star Micronics **TSP143III LAN**). It **must be the Ethernet/LAN model**.
 - **Why LAN:** the printer gets a fixed IP (e.g. `192.168.1.200`) and can be shared. The SkipTheDishes tablet pairs with it directly, and our system can send raw ESC/POS to port **9100**. The printer queues jobs, so the two never conflict.
+- **Print Receipt (browser):** builds a narrow black-and-white receipt (header, order number, pickup/delivery, customer, address, notes, items with combo contents, totals, PAID ONLINE / COLLECT) and prints it through a hidden frame with `@page { size: 80mm auto; margin: 0 }`. The `80 mm` button next to it switches to 58 mm paper (remembered per device). In the print dialog pick the receipt printer and set Margins to None.
 - **Not built yet (backlog):** a small print bridge on the restaurant LAN (Node or Python) that polls `/api/kitchen/orders` (with an Access service token) and prints new orders. Until then, staff use *Print* in the browser.
 
 ---
