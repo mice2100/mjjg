@@ -188,6 +188,8 @@ Progressive profiling:
 
 New Order starts on the **phone step**: an on-screen keypad (`inputmode="none"`, so the iPad keyboard stays hidden; a physical keyboard still works). At 10 digits the app calls `/api/pos/customers/lookup`, fills the name, preselects pickup/delivery from the last order and the most recent address, and lists the order history. **Reorder** copies an old order into the cart (matched to today's menu by id, then code, then name; prices are today's; free coupon items are skipped). A saved address is sent exactly as stored; "New address" falls back to the street autocomplete. That autocomplete also offers hotels (typing a name, or the 🏨 Hotels button lists them all); a hotel address needs a room number and is stored as `<Hotel>, <street>, Room <n>, Moose Jaw, SK`.
 
+**Time:** the confirm window has one time picker for pickup and delivery: **ASAP** (today only) or a 30-minute slot, with day buttons for the next open days. Slots start at the next half hour after now and stay inside take-out hours (11:00–20:00, closed Mondays). The logic is `web/src/lib/slots.js` (shared like `search.js`, published at `/js/slots.js`, tested in `slots.test.js`); if the hours change, change them there and in `site.js`. The chosen text is stored as-is in `orders.delivery_time_slot`; a later day is stored as `Fri Nov 20 · 6:30 – 7:00 PM`.
+
 **Caller ID hook:** opening `/pos/#call=3065551234` (or calling `startOrderForPhone()`) starts this lookup. An order already in progress is never replaced. The store has a landline, so the planned bridge is a USB caller-ID modem on the counter PC that opens that URL (backlog).
 
 Combo editing lives only on `/jadmin/` (admin role). The kitchen and POS screens only display what a combo contains.

@@ -961,6 +961,17 @@
     grid-template-columns: 1fr 1fr;
     gap: 14px;
   }
+  .slot-days, .slot-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .slot-days { margin-bottom: 8px; }
+  .slot-chip, .slot-day {
+    min-height: 44px; padding: 8px 14px; border: 1.5px solid var(--gray-300); border-radius: var(--radius-sm);
+    background: white; color: var(--gray-800); font-size: 15px; font-weight: 700; cursor: pointer; touch-action: manipulation;
+  }
+  .slot-day { min-height: 38px; padding: 6px 12px; font-size: 14px; color: var(--gray-600); }
+  .slot-chip.active, .slot-day.active { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+  .slot-chip.asap { min-width: 90px; }
+  .slot-empty { font-size: 14px; color: var(--gray-600); }
+
   .form-input {
     width: 100%;
     border: 1.5px solid var(--gray-300);
@@ -1800,6 +1811,14 @@
         </select>
       </div>
 
+      <!-- When: ASAP or a 30-minute slot (pickup and delivery) -->
+      <div class="form-group" id="timeSlotGroup">
+        <label>🕒 Pickup / Delivery Time</label>
+        <input type="hidden" id="modalDeliveryTime">
+        <div class="slot-days" id="slotDays"></div>
+        <div class="slot-chips" id="slotChips"></div>
+      </div>
+
       <!-- Delivery Specific Fields (Dynamic) -->
       <div class="delivery-fields-box" id="deliveryFieldsBox" style="display: none;">
         <div class="box-title">
@@ -1838,10 +1857,6 @@
         </div>
         </div> <!-- end newAddressFields -->
 
-        <div class="form-group">
-          <label>Preferred Time Slot</label>
-          <input type="text" class="form-input" id="modalDeliveryTime" placeholder="e.g., ASAP or 18:00 - 18:30">
-        </div>
       </div>
 
       <div class="form-group notes-group-wrapper">
@@ -1962,6 +1977,10 @@ let selectedHotel = null;   // hotel picked as the delivery address (needs a roo
 // ── Fuzzy search ──
 // Shared with the customer order page: web/src/lib/search.js, published at /js/search.js.
 let Search = null;
+// Time slots (30 min, from now, restaurant hours): web/src/lib/slots.js, published at /js/slots.js.
+let Slots = null;
+let slotDays = [];     // [{ label, isToday, slots }] built when the confirm window opens
+let slotDayIndex = 0;  // which day pill is selected
 
 // ── Sound Notification Engine (Web Audio API) ──
 let soundEnabled = localStorage.getItem('jg_sound_enabled') !== 'false';
@@ -3051,6 +3070,47 @@ document.addEventListener('click', (e) => {
 // ═══════════════════════════════════════════════
 // STEP 2: CONFIRM & DELIVERY MODAL
 // ═══════════════════════════════════════════════
+// ── Time slots ──
+// ASAP (value '') or one 30-minute slot. Slots are rebuilt every time the confirm window opens,
+// so they always start from the current time. A later day has no ASAP: staff must pick a slot.
+function renderTimeSlots() {
+  const group = document.getElementById('timeSlotGroup');
+  if (!Slots || !group) return;
+  const keep = document.getElementById('modalDeliveryTime').value;
+  slotDays = Slots.getSlotDays(new Date());
+  const day = slotDays.findIndex(d => d.slots.some(sl => sl.value === keep));
+  slotDayIndex = day >= 0 ? day : 0;
+  if (day < 0) document.getElementById('modalDeliveryTime').value = '';
+  drawTimeSlots();
+}
+
+function drawTimeSlots() {
+  const hidden = document.getElementById('modalDeliveryTime');
+  const day = slotDays[slotDayIndex];
+  const val = hidden.value;
+  document.getElementById('slotDays').innerHTML = slotDays.length > 1
+    ? slotDays.map((d, i) => `<button type="button" class="slot-day${i === slotDayIndex ? ' active' : ''}" onclick="pickSlotDay(${i})">${h(d.label)}</button>`).join('')
+    : '';
+  if (!day) {
+    document.getElementById('slotChips').innerHTML = '<div class="slot-empty">No time slots available.</div>';
+    return;
+  }
+  const asap = day.isToday ? `<button type="button" class="slot-chip asap${val === '' ? ' active' : ''}" onclick="pickSlot('')">ASAP</button>` : '';
+  document.getElementById('slotChips').innerHTML = asap + day.slots.map((sl, i) =>
+    `<button type="button" class="slot-chip${val === sl.value ? ' active' : ''}" onclick="pickSlot(${i})">${h(sl.label)}</button>`).join('');
+}
+
+function pickSlotDay(i) {
+  slotDayIndex = i;
+  document.getElementById('modalDeliveryTime').value = ''; // a new day needs a new choice
+  drawTimeSlots();
+}
+
+function pickSlot(i) {
+  document.getElementById('modalDeliveryTime').value = i === '' ? '' : slotDays[slotDayIndex].slots[i].value;
+  drawTimeSlots();
+}
+
 function openConfirmModal() {
   const entries = Object.values(cart);
   if (entries.length === 0) return;
@@ -3061,6 +3121,7 @@ function openConfirmModal() {
   selectDeliveryType(currentDeliveryType);
   updateConfirmCalculations();
   renderNotesChips();
+  renderTimeSlots();
 
   // Returning customers arrive with name and phone filled in: don't pop the keyboard for them.
   setTimeout(() => {
@@ -3093,7 +3154,7 @@ function resetCartAndForm() {
   const deliveryApt = document.getElementById('modalDeliveryApt');
   if (deliveryApt) deliveryApt.value = '';
   const deliveryTime = document.getElementById('modalDeliveryTime');
-  if (deliveryTime) deliveryTime.value = '';
+  if (deliveryTime) { deliveryTime.value = ''; slotDayIndex = 0; }
   const custNotes = document.getElementById('modalCustomerNotes');
   if (custNotes) custNotes.value = '';
 
@@ -3166,6 +3227,11 @@ async function confirmAndSubmitOrder() {
   const deliveryApt = document.getElementById('modalDeliveryApt').value.trim();
   const deliveryTime = document.getElementById('modalDeliveryTime').value.trim();
   const customerNotes = document.getElementById('modalCustomerNotes').value.trim();
+
+  if (slotDays[slotDayIndex] && !slotDays[slotDayIndex].isToday && !deliveryTime) {
+    showToast('⚠️ Pick a time for ' + slotDays[slotDayIndex].label);
+    return;
+  }
 
   if (!custName) {
     alert('Please enter Customer Name');
@@ -3898,8 +3964,9 @@ async function saveComboEdit() {
 
 // ── App Initialization ──
 async function loadReferenceData() {
-  const [menuRes, streetsRes, search] = await Promise.all([fetch('/api/menu'), fetch('/api/streets', { cache: 'no-cache' }), import('/js/search.js')]);
+  const [menuRes, streetsRes, search, slots] = await Promise.all([fetch('/api/menu'), fetch('/api/streets', { cache: 'no-cache' }), import('/js/search.js'), import('/js/slots.js')]);
   Search = search;
+  Slots = slots;
   MENU = (await menuRes.json()).menu || [];
   const streetData = await streetsRes.json();
   MOOSE_JAW_STREETS = streetData.streets || [];
