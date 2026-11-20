@@ -38,7 +38,7 @@
   "vars": {
     "ENVIRONMENT": "production",
     "PUBLIC_SITE_URL": "https://mjjadegarden.com",
-    "WC_STORE_URL": "https://mjjadegarden.com",
+    "WC_STORE_URL": "https://www.mjjadegarden.com",
     "GOOGLE_CLIENT_ID": "",
     "APPLE_SERVICES_ID": "",
     "FACEBOOK_APP_ID": "",
