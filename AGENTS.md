@@ -16,7 +16,7 @@
 | Phone orders (POS) | `/staff/pos/` | Staff (Cloudflare Access) | Working; phase 1 launch |
 | Order management (kitchen board) | `/staff/kitchen/` | Staff (Cloudflare Access) | Working; phase 1 launch. `/staff/` still shows both |
 | Order API, customer accounts, coupons | `/api/*` | Website + staff app | Working, unit + e2e tested locally |
-| WooCommerce → D1 order import | cron + webhook | Background | Working; delete after cutover |
+| WooCommerce → D1 order import | cron (webhook optional) | Background | Working; all 1042 historic orders imported 2026-11-19; delete after cutover |
 
 **Current phase:** the old WordPress site still takes online orders. The Worker imports them into D1 so the kitchen sees **all** orders in one place. After the owner approves the new site, DNS for `mjjadegarden.com` moves to the Worker and WordPress is shut down (see §11).
 
@@ -281,15 +281,15 @@ Credentials: `.deploy.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, opt
 3. Cloudflare Zero Trust → Access application for `<host>/staff/*` and `<host>/api/staff/*`. Allow staff emails (one-time PIN). Put the team domain and the application AUD in `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`. Until then the staff API refuses every request.
 4. Turnstile widget (hostname = the deploy host) → `TURNSTILE_SITE_KEY` var plus the secret.
 5. Clover: set `CLOVER_MERCHANT_ID` (the 13-character merchant UUID, **not** the numeric processor MID) and `CLOVER_ENV` in `wrangler.jsonc`. In the Clover Merchant Dashboard → Ecommerce → Hosted Checkout, set the webhook URL `https://<host>/api/webhooks/clover`, click Generate, and store the Signing Secret as `CLOVER_WEBHOOK_SECRET`. Keep Clover's own tipping **off**. Test with a real card for $1 worth of food, then refund it in Clover.
-6. WooCommerce → Settings → Advanced → Webhooks: "Order created" and "Order updated" → `https://<host>/api/webhooks/woocommerce`, using the same secret as `WC_WEBHOOK_SECRET`.
+6. WooCommerce webhook (**optional**): the cron already pulls new and changed orders every minute, so the kitchen sees them within about a minute. A webhook only makes that instant: Settings → Advanced → Webhooks, "Order created" and "Order updated" → `https://<host>/api/webhooks/woocommerce`, using the same secret as `WC_WEBHOOK_SECRET`. Skipped for now.
 
-`<host>` is the test host during dual-run: `jg.moosephotoprint.com` (custom domain in `wrangler.jsonc` `routes`; the API token has Workers Routes edit on that zone) and the workers.dev host, which stays on. Both are in the Access application. Clover runs in **sandbox** (`CLOVER_ENV`, test cards only) until cutover. Clover's return URL follows the request's own origin, so the site works on any host. Moving to a new host means updating the Access application, the Turnstile hostnames and both webhook URLs.
+`<host>` is `w2.mjjadegarden.com` during dual-run (custom domain in `wrangler.jsonc` `routes`). `workers_dev` and preview URLs are **off**: Access cannot protect workers.dev, so w2 is the only public host. Access uses the one-time PIN identity provider and an Allow policy listing staff emails. The Cloudflare token lives in the environment as `CF_ACCOUNT_TOKEN` / `CF_ACCOUNT_ID` (mise); `scripts/deploy.sh` maps them to `CLOUDFLARE_*`. Clover runs in **sandbox** (`CLOVER_ENV`, test cards only) until cutover. Clover's return URL follows the request's own origin, so the site works on any host. Moving to a new host means updating the Access application, the Turnstile hostnames and both webhook URLs.
 
 ---
 
 ## 11. Cutover plan
 
-1. **Now (dual-run):** the Worker runs on `jg.moosephotoprint.com` and `jadegarden.<account>.workers.dev`, with Clover in sandbox. Staff use `/staff/`. WordPress keeps taking customer orders, which flow in through the webhook and cron.
+1. **Now (dual-run):** the Worker runs on `w2.mjjadegarden.com`, with Clover in sandbox. Staff use `/staff/`. WordPress keeps taking customer orders, which flow in through the cron (`WC_STORE_URL` is `https://www.mjjadegarden.com`; the apex was rate limited with 429 by Hostinger while proxied). Historic WooCommerce orders were imported once: everything before the import day is `completed`, because the old system never set statuses.
 2. **Owner review:** the owner checks the website copy, hours, menu prices, privacy policy and photos. Place real test orders.
 3. **Cutover:** switch `CLOVER_ENV` to `production` with the live merchant id and keys, then attach the custom domains `mjjadegarden.com` and `www` to the Worker (`routes` in `wrangler.jsonc`). `_redirects` maps the old WordPress URLs.
 4. **After cutover:** remove the WooCommerce part of `scheduled()` (keep the cron: it expires unpaid Clover checkouts), `worker/services/woocommerce.js`, `routes/webhooks.js` and the WC secrets. Then shut down WordPress. Optionally import past WooCommerce customers into `customers` with `marketing_opt_in = 0`.

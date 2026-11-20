@@ -195,7 +195,7 @@ npx wrangler d1 execute jadegarden-db --remote --command "INSERT INTO coupons (.
 
 1. 在 `wrangler.jsonc` 把 `routes` 设为 `[{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }]`,然后 `npm run deploy`。Wrangler 会自动创建 DNS 记录和证书。(`PUBLIC_SITE_URL` 可以保持 `https://mjjadegarden.com`。)
 2. 把 `w2.mjjadegarden.com` 加进 Access 应用(§4.5)和 Turnstile 组件的主机名。
-3. 把 Clover webhook 设为 `https://w2.mjjadegarden.com/api/webhooks/clover`(WooCommerce webhook 设为 `https://w2.mjjadegarden.com/api/webhooks/woocommerce`)。
+3. 把 Clover webhook 设为 `https://w2.mjjadegarden.com/api/webhooks/clover`(WooCommerce webhook 可选,设为 `https://w2.mjjadegarden.com/api/webhooks/woocommerce`;不设也行,定时任务每分钟都会导入订单)。
 4. 测试期间保持 `CLOVER_ENV=sandbox`:下单、用测试卡付款、在 `/staff/kitchen/` 看到订单并标记完成。店主在此审阅文案、营业时间、价格、隐私政策和照片。
 5. 让员工真实使用 `https://w2.mjjadegarden.com/staff/pos/` 和 `/staff/kitchen/`(电话订单,以及由定时任务导入的 WordPress 订单)。这样运行到确认稳定为止。
 

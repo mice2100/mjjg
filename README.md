@@ -193,7 +193,7 @@ The domain is already on Cloudflare, so we launch in two stages. WordPress keeps
 
 1. In `wrangler.jsonc` set `routes` to `[{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }]`, then `npm run deploy`. Wrangler creates the DNS record and certificate. (`PUBLIC_SITE_URL` may stay `https://mjjadegarden.com`.)
 2. Add `w2.mjjadegarden.com` to the Access application (§4.5) and to the Turnstile widget hostnames.
-3. Set the Clover webhook to `https://w2.mjjadegarden.com/api/webhooks/clover` (and the WooCommerce webhooks to `https://w2.mjjadegarden.com/api/webhooks/woocommerce`).
+3. Set the Clover webhook to `https://w2.mjjadegarden.com/api/webhooks/clover` (a WooCommerce webhook to `https://w2.mjjadegarden.com/api/webhooks/woocommerce` is optional: the cron already imports orders every minute).
 4. Keep `CLOVER_ENV` at `sandbox` while testing: place orders, pay with a test card, see them on `/staff/kitchen/`, mark them complete. The owner reviews copy, hours, prices, privacy text and photos here.
 5. Let staff use `https://w2.mjjadegarden.com/staff/pos/` and `/staff/kitchen/` for real (phone orders, WordPress orders imported by the cron). Run like this until it is stable.
 
