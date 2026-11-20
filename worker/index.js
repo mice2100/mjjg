@@ -3,7 +3,7 @@
 //   scheduled -> expire abandoned Clover checkouts, customer backfill, WooCommerce order sync (cron in wrangler.jsonc)
 
 import { HttpError, errorResponse } from './lib/http.js';
-import { isStaffAdmin, requireStaff } from './auth/staff.js';
+import { requireStaff } from './auth/staff.js';
 import * as pub from './routes/public.js';
 import * as account from './routes/account.js';
 import * as staff from './routes/staff.js';
@@ -26,12 +26,17 @@ const ROUTES = [
   ['GET', '/api/me', account.getMe],
   ['PATCH', '/api/me', account.patchMe],
 
-  ['GET', '/api/staff/orders', staff.getOrders, { staff: true }],
-  ['POST', '/api/staff/orders', staff.postOrder, { staff: true }],
-  ['PATCH', '/api/staff/orders/:id', staff.patchOrder, { staff: true }],
-  ['GET', '/api/staff/customers/lookup', staff.getCustomerLookup, { staff: true }],
-  ['GET', '/api/staff/combos', staff.getCombos, { staff: true }],
-  ['PUT', '/api/staff/combos/:id', staff.putCombo, { staff: true, admin: true }],
+  // Kitchen board (/staff/)
+  ['GET', '/api/kitchen/orders', staff.getOrders, { staff: 'kitchen' }],
+  ['PATCH', '/api/kitchen/orders/:id', staff.patchOrder, { staff: 'kitchen' }],
+  ['GET', '/api/kitchen/combos', staff.getCombos, { staff: 'kitchen' }],
+  // Phone orders (/pos/)
+  ['POST', '/api/pos/orders', staff.postOrder, { staff: 'pos' }],
+  ['GET', '/api/pos/customers/lookup', staff.getCustomerLookup, { staff: 'pos' }],
+  ['GET', '/api/pos/combos', staff.getCombos, { staff: 'pos' }],
+  // Administration (/jadmin/)
+  ['GET', '/api/admin/combos', staff.getCombos, { staff: 'admin' }],
+  ['PUT', '/api/admin/combos/:id', staff.putCombo, { staff: 'admin' }],
 
   ['POST', '/api/webhooks/woocommerce', postWooWebhook],
   ['POST', '/api/webhooks/clover', postCloverWebhook],
@@ -47,8 +52,7 @@ export default {
         if (!match) continue;
         pathMatched = true;
         if (route.method !== request.method) continue;
-        const staffUser = route.opts.staff ? await requireStaff(request, env) : null;
-        if (route.opts.admin && !isStaffAdmin(env, staffUser)) throw new HttpError(403, 'Only a manager can change this.');
+        const staffUser = route.opts.staff ? await requireStaff(request, env, route.opts.staff) : null;
         return await route.handler(request, env, match.pathname.groups, staffUser);
       }
       throw new HttpError(pathMatched ? 405 : 404, pathMatched ? 'Method not allowed' : 'Not found');

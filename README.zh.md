@@ -7,7 +7,7 @@
 Jade Garden 餐厅(471 Main St N, Moose Jaw, SK)整套系统运行在 **一个 Cloudflare Worker + 一个 D1 数据库** 上:
 
 - **顾客网站**(`/`、`/order/`、`/gallery/`、`/privacy/`):Astro 静态站,支持自取/外送在线点餐、优惠券,可选 Google/Apple/Facebook 登录。
-- **员工端**(`/staff/pos/`、`/staff/kitchen/`):iPad 电话点餐 POS + 带提示音的厨房订单看板,由 Cloudflare Access 保护。
+- **员工端**(`/pos/`、`/staff/`):iPad 电话点餐 POS + 带提示音的厨房订单看板,由 Cloudflare Access 保护。
 - **API**(`/api/*`):服务端定价、订单、顾客、优惠券、支付回调。
 - **在线支付**:Clover Hosted Checkout(顾客在 Clover 的页面付款,卡号不经过我们的代码)。
 - **WooCommerce 导入**(临时):在切换前,把旧 WordPress 站的订单同步进厨房看板。
@@ -74,7 +74,7 @@ docs/architecture_and_guide.md   POS 搜索、打印机硬件、切换流程
 tools/               可选的离线 Python 辅助脚本(WooCommerce 检查、旧站图片导入)
 ```
 
-整体原理:浏览器从 `web/dist` 加载静态页面;`/api/*` 由 `worker/index.js` 处理并读写 D1。定时任务**每分钟**运行一次,用于让未付款的 Clover 结账过期,以及(切换前)导入 WooCommerce 订单。员工页面和 `/api/staff/*` 在 Cloudflare Access 保护之下。
+整体原理:浏览器从 `web/dist` 加载静态页面;`/api/*` 由 `worker/index.js` 处理并读写 D1。定时任务**每分钟**运行一次,用于让未付款的 Clover 结账过期,以及(切换前)导入 WooCommerce 订单。员工页面和 `/api/{kitchen,pos,admin}/*` 在 Cloudflare Access 保护之下。
 
 ---
 
@@ -107,10 +107,9 @@ cp .deploy.env.example .deploy.env      # 填 CLOUDFLARE_API_TOKEN 和 CLOUDFLAR
 |---|---|
 | `d1_databases[0].database_id` | `npm run deploy:setup` 会在你的账号里查找或创建 `jadegarden-db`,并自动写入新 id |
 | `routes` | 目前是旧测试域名 `jg.moosephotoprint.com`。分阶段上线时改成 `w2.mjjadegarden.com`(见 §7) |
-| `ACCESS_TEAM_DOMAIN`、`ACCESS_AUD` | 换成你自己的 Zero Trust 值(步骤 4.5) |
+| `ACCESS_TEAM_DOMAIN`、`ACCESS_AUD_KITCHEN`、`ACCESS_AUD_POS`、`ACCESS_AUD_ADMIN` | 你的 Zero Trust 团队域和每个 Access 应用的 AUD(步骤 4.5) |
 | `CLOVER_MERCHANT_ID`、`CLOVER_ENV` | 你的 Clover merchant UUID,以及 `sandbox` 或 `production`(步骤 4.6) |
 | `PUBLIC_SITE_URL`、`WC_STORE_URL` | `https://mjjadegarden.com` |
-| `ADMIN_EMAILS` | 允许在员工端编辑套餐内容的邮箱。留空 = 所有员工都可编辑 |
 
 ### 4.4 首次部署
 
@@ -122,7 +121,15 @@ npm run deploy:setup
 
 ### 4.5 保护员工端(Cloudflare Access)
 
-Zero Trust → Access → Applications → 添加 **self-hosted** 应用。在你的域名下加两个路径:`/staff/*` 和 `/api/staff/*`。策略:允许员工邮箱(可用一次性 PIN 登录)。把 **team domain**(`xxxx.cloudflareaccess.com`)和应用的 **AUD tag** 填入 `wrangler.jsonc` 的 `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`,然后 `npm run deploy`。在配置好之前,员工 API 会拒绝所有请求(这是故意的:出错时默认拒绝)。
+Zero Trust → Access → Applications → 添加 **self-hosted** 应用,共三个,都在你的域名下(可用一次性 PIN 登录):
+
+| 应用 | 路径 | 谁可以用(Access 群组) | `wrangler.jsonc` 变量 |
+|---|---|---|---|
+| Kitchen 后厨 | `/staff`、`/api/kitchen` | Kitchen staff + Admins | `ACCESS_AUD_KITCHEN` |
+| POS 电话订单 | `/pos`、`/api/pos` | POS staff + Admins | `ACCESS_AUD_POS` |
+| Admin 管理(套餐) | `/jadmin`、`/api/admin` | Admins | `ACCESS_AUD_ADMIN` |
+
+先建三个群组(Access controls → Access groups),在各应用的策略里引用它们;把每个应用的 **AUD tag** 填入对应变量,**team domain** 填入 `ACCESS_TEAM_DOMAIN`,然后 `npm run deploy`。以后增删人员只需编辑群组,无需部署。某个角色的 AUD 没填之前,它的 API 会拒绝所有请求(故意的:出错时默认拒绝)。
 
 ### 4.6 Clover(在线支付)
 
@@ -196,8 +203,8 @@ npx wrangler d1 execute jadegarden-db --remote --command "INSERT INTO coupons (.
 1. 在 `wrangler.jsonc` 把 `routes` 设为 `[{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }]`,然后 `npm run deploy`。Wrangler 会自动创建 DNS 记录和证书。(`PUBLIC_SITE_URL` 可以保持 `https://mjjadegarden.com`。)
 2. 把 `w2.mjjadegarden.com` 加进 Access 应用(§4.5)和 Turnstile 组件的主机名。
 3. 把 Clover webhook 设为 `https://w2.mjjadegarden.com/api/webhooks/clover`(WooCommerce webhook 可选,设为 `https://w2.mjjadegarden.com/api/webhooks/woocommerce`;不设也行,定时任务每分钟都会导入订单)。
-4. 测试期间保持 `CLOVER_ENV=sandbox`:下单、用测试卡付款、在 `/staff/kitchen/` 看到订单并标记完成。店主在此审阅文案、营业时间、价格、隐私政策和照片。
-5. 让员工真实使用 `https://w2.mjjadegarden.com/staff/pos/` 和 `/staff/kitchen/`(电话订单,以及由定时任务导入的 WordPress 订单)。这样运行到确认稳定为止。
+4. 测试期间保持 `CLOVER_ENV=sandbox`:下单、用测试卡付款、在 `/staff/` 看到订单并标记完成。店主在此审阅文案、营业时间、价格、隐私政策和照片。
+5. 让员工真实使用 `https://w2.mjjadegarden.com/pos/`(电话订单)和 `/staff/`(后厨,含定时任务导入的 WordPress 订单);管理员用 `/jadmin/`(套餐)。这样运行到确认稳定为止。
 
 **阶段 2:正式切到 `www`**
 
@@ -237,7 +244,7 @@ npx wrangler d1 execute jadegarden-db --remote --command "INSERT INTO coupons (.
 
 | 现象 | 可能原因 |
 |---|---|
-| `/staff/` 先出现 Cloudflare 登录,随后 `/api/staff/*` 返回 401/403 | `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` 填错,或 Access 应用没有同时覆盖 `/staff/*` 和 `/api/staff/*` |
+| `/staff/` 先出现 Cloudflare 登录,随后 `/api/kitchen/*` 返回 401/403 | `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD_KITCHEN` 填错,或 Access 应用没有同时覆盖 `/staff` 和 `/api/kitchen`(`/pos`、`/jadmin` 同理) |
 | 结账返回 503 | 生产环境没有 `CLOVER_PRIVATE_KEY` |
 | 结账返回 502 | Clover 拒绝了请求:检查 merchant UUID、token、环境 |
 | 顾客已付款但订单一直是 “awaiting” | webhook 地址或 `CLOVER_WEBHOOK_SECRET` 不对。定时任务每分钟也会向 Clover 支付 API 核对,作为备份 |

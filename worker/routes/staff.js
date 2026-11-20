@@ -1,15 +1,14 @@
-// Staff API (POS + kitchen board). Every handler here is wrapped by requireStaff in index.js;
-// handlers registered with { admin: true } also pass isStaffAdmin.
+// Staff API (kitchen board, POS, admin). Every handler here is wrapped by requireStaff in index.js,
+// which checks the caller's Access sign-in for the route's role (see auth/staff.js).
 
 import { HttpError, json, readJson } from '../lib/http.js';
 import { normalizePhone, toDollars } from '../lib/util.js';
 import { createOrder, listStaffOrderChanges, listStaffOrders, setOrderStatus, toStaffOrder } from '../services/orders.js';
 import { lookupCustomerByPhone } from '../services/customers.js';
 import { listCombos, saveCombo } from '../services/combos.js';
-import { isStaffAdmin } from '../auth/staff.js';
 
-// GET /api/staff/orders            → the kitchen board (pending + last 7 days)
-// GET /api/staff/orders?since=<iso> → only orders created or changed after that time
+// GET /api/kitchen/orders            → the kitchen board (pending + last 7 days)
+// GET /api/kitchen/orders?since=<iso> → only orders created or changed after that time
 export async function getOrders(request, env) {
   const serverTime = new Date().toISOString();
   const since = new URL(request.url).searchParams.get('since');
@@ -33,7 +32,7 @@ export async function patchOrder(request, env, { id }) {
   return json({ success: true, order: await setOrderStatus(env.DB, id, body.status) });
 }
 
-// GET /api/staff/customers/lookup?phone=306-555-1234 → known customer, addresses, order history
+// GET /api/pos/customers/lookup?phone=306-555-1234 → known customer, addresses, order history
 export async function getCustomerLookup(request, env) {
   const phone = normalizePhone(new URL(request.url).searchParams.get('phone'));
   if (phone.length !== 10) throw new HttpError(400, 'Enter a 10-digit phone number.');
@@ -57,7 +56,7 @@ export async function getCustomerLookup(request, env) {
 }
 
 export async function getCombos(request, env, params, staff) {
-  return json({ success: true, combos: await listCombos(env.DB), can_edit: isStaffAdmin(env, staff) });
+  return json({ success: true, combos: await listCombos(env.DB), can_edit: staff?.role === 'admin' });
 }
 
 export async function putCombo(request, env, { id }, staff) {

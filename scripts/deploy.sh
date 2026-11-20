@@ -75,8 +75,8 @@ secrets_file() {
 
 config_warnings() {
   local var
-  for var in ACCESS_TEAM_DOMAIN ACCESS_AUD; do
-    grep -q "\"$var\": \"\"" wrangler.jsonc && warn "$var is empty: /api/staff/* refuses every request until Cloudflare Access is set up"
+  for var in ACCESS_TEAM_DOMAIN ACCESS_AUD_KITCHEN ACCESS_AUD_POS ACCESS_AUD_ADMIN; do
+    grep -q "\"$var\": \"\"" wrangler.jsonc && warn "$var is empty: that staff API refuses every request until its Cloudflare Access application is set up"
   done
   grep -q '"CLOVER_MERCHANT_ID": ""' wrangler.jsonc && warn "CLOVER_MERCHANT_ID is empty: web orders return 503 until Clover is set up"
   grep -q '"CLOVER_ENV": "sandbox"' wrangler.jsonc && warn "CLOVER_ENV is sandbox: checkout takes Clover test cards only, no real money"
@@ -183,9 +183,11 @@ smoke_test() {
     [[ "$code" == 200 ]] || fail=1
   done
   # Staff data must never be public: Access (302/403) or the Worker's own JWT check (401/403).
-  code="$(curl -s -o /dev/null -w '%{http_code}' "$url/api/staff/orders" || true)"
-  printf '  %-16s %s (must not be 200)\n' /api/staff/orders "$code"
-  [[ "$code" == 200 ]] && fail=1
+  for path in /api/kitchen/orders /api/pos/customers/lookup /api/admin/combos /staff/ /pos/ /jadmin/; do
+    code="$(curl -s -o /dev/null -w '%{http_code}' "$url$path" || true)"
+    printf '  %-26s %s (must not be 200)\n' "$path" "$code"
+    [[ "$code" == 200 ]] && fail=1
+  done
   (( fail == 0 )) || die "smoke test failed. To undo the code change: scripts/deploy.sh rollback"
   echo "All good."
 }

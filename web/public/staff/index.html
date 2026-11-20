@@ -1924,22 +1924,30 @@
 let MENU = [];
 
 // ── Moose Jaw Streets ──
-// Three entry points, one app (same file, same API):
-//   /staff/pos/     phone orders: New Order + Combos, no order board, no polling
-//   /staff/kitchen/ order management: the board only (web, phone and WooCommerce orders)
-//   /staff/         everything (one device doing both jobs)
-const APP_MODE = location.pathname.startsWith('/staff/pos') ? 'pos'
-  : location.pathname.startsWith('/staff/kitchen') ? 'kitchen' : 'all';
+// Three entry points, one file. Each has its own Cloudflare Access application and its own API prefix:
+//   /staff/   kitchen: the order board (web, phone and WooCommerce orders)     -> /api/kitchen/*
+//   /pos/     phone orders: New Order only, no board, no polling                -> /api/pos/*
+//   /jadmin/  administration: combo contents                                    -> /api/admin/*
+const APP_MODE = location.pathname.startsWith('/pos') ? 'pos'
+  : location.pathname.startsWith('/jadmin') ? 'admin' : 'kitchen';
+const API = `/api/${APP_MODE}`;
 
 function applyAppMode() {
   const hide = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
   const subtitle = document.querySelector('header .subtitle');
   if (APP_MODE === 'pos') {
     hide('tabOrders');
+    hide('tabCombos');
     document.title = 'Jade Garden · Phone Orders';
     if (subtitle) subtitle.textContent = 'Moose Jaw · Phone Orders';
     switchView('newOrder');
-  } else if (APP_MODE === 'kitchen') {
+  } else if (APP_MODE === 'admin') {
+    hide('tabOrders');
+    hide('tabNewOrder');
+    document.title = 'Jade Garden · Admin';
+    if (subtitle) subtitle.textContent = 'Moose Jaw · Admin';
+    switchView('combos');
+  } else {
     hide('tabNewOrder');
     hide('tabCombos');
     document.title = 'Jade Garden · Orders';
@@ -2143,11 +2151,11 @@ function mergeOrderChanges(current, changed) {
 }
 
 async function fetchOrdersFromAPI({ full = false } = {}) {
-  if (APP_MODE === 'pos') return; // the phone-order screen does not show the board
+  if (APP_MODE !== 'kitchen') return; // only the kitchen screen shows the board
   try {
     const delta = !full && lastServerTime && Date.now() - lastFullFetchAt < FULL_REFRESH_MS;
     const since = delta ? new Date(Date.parse(lastServerTime) - POLL_OVERLAP_MS).toISOString() : null;
-    const data = await staffApi('GET', '/api/staff/orders' + (since ? '?since=' + encodeURIComponent(since) : ''));
+    const data = await staffApi('GET', `${API}/orders` + (since ? '?since=' + encodeURIComponent(since) : ''));
     const incoming = data.orders.map(sanitizeOrder);
     if (delta && incoming.length >= MAX_CHANGES) return fetchOrdersFromAPI({ full: true });
     const fresh = delta ? mergeOrderChanges(orders, incoming) : incoming;
@@ -2457,7 +2465,7 @@ async function toggleOrderStatus(orderId) {
   renderOrderDetail();
 
   try {
-    await staffApi('PATCH', `/api/staff/orders/${encodeURIComponent(orderId)}`, { status: o.status });
+    await staffApi('PATCH', `${API}/orders/${encodeURIComponent(orderId)}`, { status: o.status });
     showToast(o.status === 'completed' ? '✅ Order marked as completed' : '🔄 Order marked as pending');
   } catch (e) {
     o.status = previous;
@@ -3113,7 +3121,7 @@ async function confirmAndSubmitOrder() {
   if (submitBtn) submitBtn.disabled = true;
   let created;
   try {
-    created = sanitizeOrder((await staffApi('POST', '/api/staff/orders', payload)).order);
+    created = sanitizeOrder((await staffApi('POST', `${API}/orders`, payload)).order);
   } catch (e) {
     // Keep the cart and form so nothing is lost; staff can retry.
     alert('Order was NOT saved: ' + e.message + '\nPlease try again.');
@@ -3233,7 +3241,7 @@ document.addEventListener('focusin', () => setTimeout(keepFocusedFieldVisible, 3
 
 // ═══════════════════════════════════════════════
 // NEW ORDER · STEP 0: CUSTOMER (phone lookup, addresses, history, reorder)
-// Data from /api/staff/customers/lookup is kept raw (it is sent back on the order)
+// Data from /api/pos/customers/lookup is kept raw (it is sent back on the order)
 // and escaped with h() wherever it is rendered.
 // ═══════════════════════════════════════════════
 const h = escapeHtml;
@@ -3313,7 +3321,7 @@ async function lookupPhone(digits) {
   lookupState = 'loading';
   renderCustomerResult();
   try {
-    const data = await staffApi('GET', `/api/staff/customers/lookup?phone=${encodeURIComponent(digits)}`);
+    const data = await staffApi('GET', `${API}/customers/lookup?phone=${encodeURIComponent(digits)}`);
     if (seq !== lookupSeq) return;
     orderCustomer = data;
     lookupState = 'done';
@@ -3601,8 +3609,8 @@ function startOrderForPhone(raw) {
 function handleCallHash() {
   const m = location.hash.match(/^#call=(\+?[\d-]+)$/);
   if (!m) return;
-  if (APP_MODE === 'kitchen') {
-    location.replace('/staff/pos/' + location.hash); // phone orders are taken on the POS screen
+  if (APP_MODE !== 'pos') {
+    location.replace('/pos/' + location.hash); // phone orders are taken on the POS screen
     return;
   }
   history.replaceState(null, '', location.pathname + location.search);
@@ -3620,7 +3628,7 @@ let comboSearchQuery = '';
 
 async function loadCombos() {
   try {
-    const data = await staffApi('GET', '/api/staff/combos');
+    const data = await staffApi('GET', `${API}/combos`);
     COMBOS = new Map(data.combos.map(c => [c.combo_id, c.components]));
     canEditCombos = Boolean(data.can_edit);
   } catch (e) {
@@ -3780,7 +3788,7 @@ async function saveComboEdit() {
   const btn = document.getElementById('ceSave');
   if (btn) btn.disabled = true;
   try {
-    const { combo } = await staffApi('PUT', `/api/staff/combos/${comboEdit.id}`, {
+    const { combo } = await staffApi('PUT', `${API}/combos/${comboEdit.id}`, {
       components: comboEdit.lines.map(l => (l.id != null ? { id: l.id, qty: l.qty } : { name: l.name, qty: l.qty })),
     });
     if (combo.components.length) COMBOS.set(combo.combo_id, combo.components);

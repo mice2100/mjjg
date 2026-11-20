@@ -1,5 +1,5 @@
 // One Worker serves everything:
-//   * static assets built by Astro (web/dist): customer site + /staff/ app
+//   * static assets built by Astro (web/dist): customer site + /staff/ (kitchen), /pos/ (phone orders), /jadmin/ (admin)
 //   * /api/*  -> worker/index.js fetch handler (D1-backed API)
 //   * cron    -> worker/index.js scheduled handler (expire unpaid checkouts, WooCommerce -> D1 sync)
 // Secrets are NOT stored here. Set them with `wrangler secret put <NAME>` (prod)
@@ -44,9 +44,10 @@
     "FACEBOOK_APP_ID": "",
     "TURNSTILE_SITE_KEY": "0x4AAAAAAGJcinUT1RjV_oHy",
     "ACCESS_TEAM_DOMAIN": "jadegarden.cloudflareaccess.com",
-    // Who may edit combo contents in the staff app (comma-separated Access emails). Empty = every staff member.
-    "ADMIN_EMAILS": "",
-    "ACCESS_AUD": "394a0a606f9b2a80a2a1a64b9dc5ae2774f644a93586513b9a35dc16e68b536f",
+    // One Access application per role (Zero Trust > Access > Applications). Who may sign in is set there, not here.
+    "ACCESS_AUD_KITCHEN": "394a0a606f9b2a80a2a1a64b9dc5ae2774f644a93586513b9a35dc16e68b536f", // /staff/ + /api/kitchen/*
+    "ACCESS_AUD_POS": "99f6632a8b198d0cb3caa46f9853d45ca43531fa95f9b6c18aa75c96dec3eb2a", // /pos/ + /api/pos/*
+    "ACCESS_AUD_ADMIN": "26d9392a6370744e2cf026eda1caca1406035ae4ab23e222822c61aaf81cbcee", // /jadmin/ + /api/admin/*
     // Clover Hosted Checkout. 'production' charges real cards; 'sandbox' uses apisandbox.dev.clover.com.
     // CLOVER_MERCHANT_ID is the 13-character merchant UUID (Merchant Dashboard URL), not the numeric MID.
     // Secrets: CLOVER_PRIVATE_KEY, CLOVER_WEBHOOK_SECRET. Without the key, web orders are refused in production.
