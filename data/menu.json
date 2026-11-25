@@ -452,6 +452,7 @@
       "name": "N5 Singapore Fried Rice Noodles (Hot)",
       "price": 16.95,
       "category": "Noodles & Chow Mein",
+      "gf": true,
       "image": "/images/menu/107.webp"
     },
     {
