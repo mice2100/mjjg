@@ -536,3 +536,7 @@ body.osk-open .fanwrap{display:none}
 .tile{position:relative}
 .gfmark{position:absolute;top:6px;right:6px;font-size:10px;font-weight:800;letter-spacing:.04em;line-height:1;padding:4px 5px;border-radius:999px;background:#E3F1E7;color:#2F6B43;border:1px solid #9CC7A9}
 .tile:has(.gfmark) .tname{padding-right:26px}
+
+/* set-dinner contents: one item per line */
+.tdesc.tlist{display:flex;flex-direction:column;gap:1px}
+.inclist{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}

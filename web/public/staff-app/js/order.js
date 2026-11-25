@@ -147,13 +147,14 @@ function itemsHtml() {
   if (!list.length) return `<div class="empty">${U.q ? 'No dish matches “' + esc(U.q) + '”.' : 'No dishes.'}</div>`;
   return list.map((i) => {
     const out = S.sold.has(i.id);
-    const combo = (S.combos.get(i.id) || []).map((c) => (c.qty > 1 ? c.qty + '× ' : '') + shortName(c.name)).join(' · ');
+    // Set dinners: what is in them, one per line, in the order the kitchen lists them.
+    const combo = (S.combos.get(i.id) || []).map((c) => `<span>${c.qty > 1 ? c.qty + '× ' : ''}${esc(shortName(c.name))}</span>`).join('');
     const opts = asksOptions(i.id);
     return `<button class="tile ${out ? 'out' : ''}" data-act="item" data-id="${i.id}" ${out ? 'disabled aria-disabled="true"' : ''}>
       ${i.code ? `<span class="tcode">${esc(i.code)}</span>` : ''}
       ${isGf(i.id) ? '<span class="gfmark" title="Gluten free available" aria-label="Gluten free available">GF</span>' : ''}
       ${dishHtml(i.name, i.id, 'tname')}
-      ${combo ? `<span class="tdesc">${esc(combo)}</span>` : ''}
+      ${combo ? `<span class="tdesc tlist">${combo}</span>` : ''}
       <span class="tmeta"><span>${$m(i.price)}</span>
         <span class="tflags">${out ? '<span class="pill danger">Sold out</span>' : opts ? '<span class="pill">Options</span>' : ''}</span></span>
     </button>`;
@@ -281,10 +282,10 @@ function itemModal() {
   const line = { id: item.id, qty: M.qty, mods: modMods(), disc: modDisc() };
   const discChips = [['none', 'No discount'], ['pct', '% off'], ['amt', '$ off'], ['comp', 'Comp (free)']]
     .map(([k, n]) => `<button type="button" class="chip ${M.dt === k ? 'on' : ''}" data-act="mdt" data-t="${k}">${n}</button>`).join('');
-  const combo = (S.combos.get(item.id) || []).map((c) => `${c.qty}× ${esc(shortName(c.name))}`).join(' · ');
+  const combo = (S.combos.get(item.id) || []).map((c) => `<li>${c.qty}× ${esc(shortName(c.name))}</li>`).join('');
   return sheet(`${item.code ? `<span class="tcode" style="font-size:16px">${esc(item.code)}</span> ` : ''}${esc(shortName(item.name))}`,
     `${esc(item.category)} · ${$m(item.price)}`,
-    `${combo ? `<div><div class="eyebrow">Includes</div><p style="margin:4px 0 0">${combo}</p></div>` : ''}
+    `${combo ? `<div><div class="eyebrow">Includes</div><ul class="inclist">${combo}</ul></div>` : ''}
      ${groups}
      <div class="row"><b>Quantity</b><div class="bigstep"><button data-act="mq" data-d="-1" aria-label="One less">−</button><span>${M.qty}</span><button data-act="mq" data-d="1" aria-label="One more">+</button></div></div>
      <div class="field"><label for="m-note">Note for the kitchen</label><input id="m-note" class="input" value="${esc(M.note)}" placeholder="e.g. extra crispy, allergy: peanuts" data-input="mnote" maxlength="200"></div>
