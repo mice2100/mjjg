@@ -1,6 +1,95 @@
 {
   "menu": [
     {
+      "id": 88,
+      "code": "",
+      "name": "Combo A",
+      "price": 14.95,
+      "category": "Dinner for One",
+      "image": "/images/menu/88.webp"
+    },
+    {
+      "id": 89,
+      "code": "",
+      "name": "Combo B",
+      "price": 14.95,
+      "category": "Dinner for One",
+      "image": "/images/menu/89.webp"
+    },
+    {
+      "id": 97,
+      "code": "",
+      "name": "Jade Special",
+      "price": 15.95,
+      "category": "Dinner for One",
+      "image": "/images/menu/97.webp"
+    },
+    {
+      "id": 98,
+      "code": "",
+      "name": "Ruby Special",
+      "price": 15.95,
+      "category": "Dinner for One",
+      "image": "/images/menu/98.webp"
+    },
+    {
+      "id": 95,
+      "code": "",
+      "name": "Gluten Free Combo",
+      "price": 14.95,
+      "category": "Dinner for One"
+    },
+    {
+      "id": 99,
+      "code": "",
+      "name": "Spicy Combo",
+      "price": 21.95,
+      "category": "Dinner for One",
+      "image": "/images/menu/99.webp"
+    },
+    {
+      "id": 94,
+      "code": "",
+      "name": "Dinner for Two",
+      "price": 32.95,
+      "category": "Family Dinners"
+    },
+    {
+      "id": 96,
+      "code": "",
+      "name": "House Special Platter for Three or More",
+      "price": 49.95,
+      "category": "Family Dinners"
+    },
+    {
+      "id": 92,
+      "code": "",
+      "name": "Dinner for Four",
+      "price": 65.95,
+      "category": "Family Dinners"
+    },
+    {
+      "id": 91,
+      "code": "",
+      "name": "Dinner for Five",
+      "price": 82.95,
+      "category": "Family Dinners"
+    },
+    {
+      "id": 93,
+      "code": "",
+      "name": "Dinner for Six",
+      "price": 97.75,
+      "category": "Family Dinners"
+    },
+    {
+      "id": 90,
+      "code": "",
+      "name": "Dinner for Eight",
+      "price": 130.95,
+      "category": "Family Dinners"
+    },
+    {
       "id": 1,
       "short": "EGG",
       "code": "A1",
@@ -13,7 +102,7 @@
       "short": "SP R",
       "code": "A2",
       "name": "A2 Spring Roll (2)",
-      "price": 5.0,
+      "price": 5,
       "category": "Appetizers",
       "image": "/images/menu/2.webp"
     },
@@ -62,79 +151,263 @@
       "image": "/images/menu/7.webp"
     },
     {
-      "id": 8,
-      "short": "BF GIN",
-      "code": "B1",
-      "name": "B1 Beef Stir Fry (with Ginger & Onions)",
-      "price": 18.95,
-      "category": "Beef"
+      "id": 48,
+      "short": "MINI WS",
+      "code": "H1",
+      "name": "H1 Mini Wonton Soup (6 Pieces)",
+      "price": 5.99,
+      "category": "Soup"
     },
     {
-      "id": 9,
-      "short": "BF in BBS",
-      "code": "B2",
-      "name": "B2 Beef (with Green Pepper & Black Bean Sauce)",
+      "id": 49,
+      "short": "WS",
+      "code": "H2",
+      "name": "H2 Wonton Soup (14 pieces)",
+      "price": 11.95,
+      "category": "Soup"
+    },
+    {
+      "id": 50,
+      "short": "WWS",
+      "code": "H3",
+      "name": "H3 War Wonton Soup",
+      "price": 14.95,
+      "category": "Soup",
+      "image": "/images/menu/50.webp"
+    },
+    {
+      "id": 51,
+      "short": "CK NS",
+      "code": "H4",
+      "name": "H4 Chicken & Noodle, Vegetable Soup",
+      "price": 12.95,
+      "category": "Soup"
+    },
+    {
+      "id": 40,
+      "short": "SP FR",
+      "code": "F1",
+      "name": "F1 House Special Fried Rice",
+      "price": 14.95,
+      "category": "Fried Rice",
+      "image": "/images/menu/40.webp"
+    },
+    {
+      "id": 41,
+      "short": "BF FR",
+      "code": "F2",
+      "name": "F2 Beef Fried Rice",
+      "price": 14.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 42,
+      "short": "CK FR",
+      "code": "F3",
+      "name": "F3 Chicken Fried Rice",
+      "price": 13.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 43,
+      "short": "SHR FR",
+      "code": "F4",
+      "name": "F4 Shrimp Fried Rice",
+      "price": 14.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 44,
+      "short": "MUSH FR",
+      "code": "F5",
+      "name": "F5 Mushroom Fried Rice",
+      "price": 13.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 45,
+      "short": "BBQ FR",
+      "code": "F6",
+      "name": "F6 BBQ Pork Fried Rice",
+      "price": 13.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 46,
+      "short": "VEG FR",
+      "code": "F7",
+      "name": "F7 Vegetable Fried Rice",
+      "price": 11.95,
+      "category": "Fried Rice"
+    },
+    {
+      "id": 47,
+      "code": "F8",
+      "name": "F8 Spicy Egg Fried Rice",
+      "price": 13.95,
+      "category": "Fried Rice",
+      "image": "/images/menu/47.webp"
+    },
+    {
+      "id": 52,
+      "short": "SP CM",
+      "code": "N1",
+      "name": "N1 House Special Chow Mein (Crispy)",
       "price": 16.95,
-      "category": "Beef"
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/52.webp"
     },
     {
-      "id": 10,
-      "short": "BF SUGAR PEA",
-      "code": "B3",
-      "name": "B3 Beef with Sugar Pea",
-      "price": 17.95,
-      "category": "Beef"
-    },
-    {
-      "id": 11,
-      "short": "BF BROC",
-      "code": "B4",
-      "name": "B4 Beef with Broccoli",
+      "id": 53,
+      "short": "SP FRN",
+      "code": "N10",
+      "name": "N10 Special Fried Rice Noodles",
       "price": 16.95,
-      "category": "Beef",
-      "image": "/images/menu/11.webp"
+      "category": "Noodles & Chow Mein"
     },
     {
-      "id": 12,
-      "short": "BF HOT VEG",
-      "code": "B5",
-      "name": "B5 Shredded Beef (with Hot Vegetables)",
-      "price": 16.95,
-      "category": "Beef"
+      "id": 54,
+      "short": "SSS LM",
+      "code": "N11",
+      "name": "N11 Supreme Soy Sauce & Green Onions Low Mein",
+      "price": 11.95,
+      "category": "Noodles & Chow Mein"
     },
     {
-      "id": 13,
-      "short": "CURRY BF",
-      "code": "B6",
-      "name": "B6 Curry Beef",
-      "price": 16.95,
-      "category": "Beef"
+      "id": 100,
+      "short": "BF FLAT RN",
+      "code": "N2",
+      "name": "N2 Beef Flat Rice Noodles",
+      "price": 19.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/100.webp"
     },
     {
-      "id": 14,
-      "short": "BF TOMATO",
-      "code": "B7",
-      "name": "B7 Beef in Fresh Tomato and Sauce",
-      "price": 16.95,
-      "category": "Beef"
+      "id": 101,
+      "short": "CK CM",
+      "code": "N3",
+      "name": "N3. Chicken Chow Mein (Crispy)",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/101.webp"
     },
     {
-      "id": 15,
-      "short": "GB",
-      "code": "B8",
-      "name": "B8 Ginger Beef",
+      "id": 102,
+      "short": "SHR CM",
+      "code": "N4",
+      "name": "N4 Shrimp Chow Mein",
       "price": 16.95,
-      "category": "Beef",
-      "image": "/images/menu/15.webp"
+      "category": "Noodles & Chow Mein"
     },
     {
-      "id": 16,
-      "short": "SZE BF",
-      "code": "B9",
-      "name": "B9 Szechwan Beef",
+      "id": 103,
+      "short": "BF CM",
+      "code": "N5",
+      "name": "N5 Beef Chow Mein",
       "price": 16.95,
-      "category": "Beef",
-      "image": "/images/menu/16.webp"
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 104,
+      "short": "SP LM / SP SH",
+      "code": "N6",
+      "name": "N6 House Special Low Mien or Shanghai Noodles",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 105,
+      "short": "CK LM / CK SH",
+      "code": "N7",
+      "name": "N7 Chicken Low Mein or Shanghai Noodel",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/105.webp"
+    },
+    {
+      "id": 106,
+      "short": "BF LM / BF SH",
+      "code": "N8",
+      "name": "N8 Beef Low Mein or Shanghai Noodle",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/106.webp"
+    },
+    {
+      "id": 107,
+      "short": "SING FRN",
+      "code": "N9",
+      "name": "N9 Singapore Fried Rice Noodle",
+      "price": 16.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/107.webp"
+    },
+    {
+      "id": 108,
+      "short": "Spicy Egg FRN",
+      "code": "N12",
+      "name": "N12 Spicy Egg Fried Rice Noodles",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 81,
+      "short": "BUDD VEG",
+      "code": "V1",
+      "name": "V1 Buddha's Vegetables",
+      "price": 14.95,
+      "category": "Vegetables",
+      "image": "/images/menu/81.webp"
+    },
+    {
+      "id": 82,
+      "short": "BRAISE VEG",
+      "code": "V2",
+      "name": "V2 Braised Vegetables",
+      "price": 14.95,
+      "category": "Vegetables"
+    },
+    {
+      "id": 83,
+      "short": "SP VEG",
+      "code": "V3",
+      "name": "V3 Special Mixed Vegetables",
+      "price": 15.95,
+      "category": "Vegetables",
+      "image": "/images/menu/83.webp"
+    },
+    {
+      "id": 84,
+      "short": "BF VEG",
+      "code": "V4",
+      "name": "V4 Beef with Mixed Vegetables",
+      "price": 15.95,
+      "category": "Vegetables"
+    },
+    {
+      "id": 85,
+      "short": "CK VEG",
+      "code": "V5",
+      "name": "V5 Chicken with Mixed Vegetables",
+      "price": 15.95,
+      "category": "Vegetables"
+    },
+    {
+      "id": 86,
+      "short": "BBQ VEG",
+      "code": "V6",
+      "name": "V6 BBQ Pork with Mixed Vegetables",
+      "price": 15.95,
+      "category": "Vegetables"
+    },
+    {
+      "id": 87,
+      "short": "MUSH VEG",
+      "code": "V7",
+      "name": "V7 Mushroom with Mixed Vegetables",
+      "price": 14.95,
+      "category": "Vegetables",
+      "image": "/images/menu/87.webp"
     },
     {
       "id": 17,
@@ -218,7 +491,7 @@
       "short": "CK SUGAR PEA",
       "code": "C10",
       "name": "C10 Chicken with Sugar Pea",
-      "price": 15.95,
+      "price": 16.95,
       "category": "Chicken",
       "image": "/images/menu/26.webp"
     },
@@ -248,197 +521,79 @@
       "category": "Chicken"
     },
     {
-      "id": 30,
-      "code": "D1",
-      "name": "D1 Coke",
-      "price": 2.5,
-      "category": "Drinks"
+      "id": 8,
+      "short": "BF GIN",
+      "code": "B1",
+      "name": "B1 Beef Stir Fry (with Ginger & Onions)",
+      "price": 18.95,
+      "category": "Beef"
     },
     {
-      "id": 31,
-      "code": "D2",
-      "name": "D2 Pepsi",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 32,
-      "code": "D3",
-      "name": "D3 Ginger Ale",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 33,
-      "code": "D4",
-      "name": "D4 Ice Tea",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 34,
-      "code": "D5",
-      "name": "D5 Sprite",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 35,
-      "code": "D6",
-      "name": "D6 Dr Pepper",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 36,
-      "code": "D7",
-      "name": "D7 Root Beer",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 37,
-      "code": "D8",
-      "name": "D8 Coke Zero",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 38,
-      "code": "D9",
-      "name": "D9 Diet Coke",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 39,
-      "code": "D10",
-      "name": "D10 Diet Pepsi",
-      "price": 2.5,
-      "category": "Drinks"
-    },
-    {
-      "id": 40,
-      "short": "SP FR",
-      "code": "F1",
-      "name": "F1 House Special Fried Rice",
-      "price": 14.95,
-      "category": "Fried Rice",
-      "image": "/images/menu/40.webp"
-    },
-    {
-      "id": 41,
-      "short": "BF FR",
-      "code": "F2",
-      "name": "F2 Beef Fried Rice",
-      "price": 14.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 42,
-      "short": "CK FR",
-      "code": "F3",
-      "name": "F3 Chicken Fried Rice",
-      "price": 13.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 43,
-      "short": "SHR FR",
-      "code": "F4",
-      "name": "F4 Shrimp Fried Rice",
-      "price": 14.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 44,
-      "short": "MUSH FR",
-      "code": "F5",
-      "name": "F5 Mushroom Fried Rice",
-      "price": 13.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 45,
-      "short": "BBQ FR",
-      "code": "F6",
-      "name": "F6 BBQ Pork Fried Rice",
-      "price": 13.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 46,
-      "short": "VEG FR",
-      "code": "F7",
-      "name": "F7 Vegetable Fried Rice",
-      "price": 11.95,
-      "category": "Fried Rice"
-    },
-    {
-      "id": 47,
-      "code": "F8",
-      "name": "F8 Spicy Egg Fried Rice",
-      "price": 13.95,
-      "category": "Fried Rice",
-      "image": "/images/menu/47.webp"
-    },
-    {
-      "id": 48,
-      "short": "MINI WS",
-      "code": "H1",
-      "name": "H1 Mini Wonton Soup (6 Pieces)",
-      "price": 5.99,
-      "category": "Soup"
-    },
-    {
-      "id": 49,
-      "short": "WS",
-      "code": "H2",
-      "name": "H2 Wonton Soup (14 pieces)",
-      "price": 11.95,
-      "category": "Soup"
-    },
-    {
-      "id": 50,
-      "short": "WWS",
-      "code": "H3",
-      "name": "H3 War Wonton Soup",
-      "price": 14.95,
-      "category": "Soup",
-      "image": "/images/menu/50.webp"
-    },
-    {
-      "id": 51,
-      "short": "CK NS",
-      "code": "H4",
-      "name": "H4 Chicken & Noodle, Vegetable Soup",
-      "price": 12.95,
-      "category": "Soup"
-    },
-    {
-      "id": 52,
-      "short": "SP CM",
-      "code": "N1",
-      "name": "N1 House Special Chow Mein (Crispy)",
+      "id": 9,
+      "short": "BF in BBS",
+      "code": "B2",
+      "name": "B2 Beef (with Green Pepper & Black Bean Sauce)",
       "price": 16.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/52.webp"
+      "category": "Beef"
     },
     {
-      "id": 53,
-      "short": "SP FRN",
-      "code": "N10",
-      "name": "N10 Special Fried Rice Noodles",
+      "id": 10,
+      "short": "BF SUGAR PEA",
+      "code": "B3",
+      "name": "B3 Beef with Sugar Pea",
+      "price": 17.95,
+      "category": "Beef"
+    },
+    {
+      "id": 11,
+      "short": "BF BROC",
+      "code": "B4",
+      "name": "B4 Beef with Broccoli",
       "price": 16.95,
-      "category": "Noodles & Chow Mein"
+      "category": "Beef",
+      "image": "/images/menu/11.webp"
     },
     {
-      "id": 54,
-      "short": "SSS LM",
-      "code": "N11",
-      "name": "N11 Supreme Soy Sauce & Green Onions Low Mein",
-      "price": 11.95,
-      "category": "Noodles & Chow Mein"
+      "id": 12,
+      "short": "BF HOT VEG",
+      "code": "B5",
+      "name": "B5 Shredded Beef (with Hot Vegetables)",
+      "price": 16.95,
+      "category": "Beef"
+    },
+    {
+      "id": 13,
+      "short": "CURRY BF",
+      "code": "B6",
+      "name": "B6 Curry Beef",
+      "price": 16.95,
+      "category": "Beef"
+    },
+    {
+      "id": 14,
+      "short": "BF TOMATO",
+      "code": "B7",
+      "name": "B7 Beef in Fresh Tomato and Sauce",
+      "price": 16.95,
+      "category": "Beef"
+    },
+    {
+      "id": 15,
+      "short": "GB",
+      "code": "B8",
+      "name": "B8 Ginger Beef",
+      "price": 16.95,
+      "category": "Beef",
+      "image": "/images/menu/15.webp"
+    },
+    {
+      "id": 16,
+      "short": "SZE BF",
+      "code": "B9",
+      "name": "B9 Szechwan Beef",
+      "price": 16.95,
+      "category": "Beef",
+      "image": "/images/menu/16.webp"
     },
     {
       "id": 55,
@@ -473,6 +628,15 @@
       "price": 17.95,
       "category": "Pork",
       "image": "/images/menu/58.webp"
+    },
+    {
+      "id": 115,
+      "short": "MON RIBS",
+      "code": "P1",
+      "name": "P1. Montreal Spare Ribs",
+      "price": 15.95,
+      "category": "Pork",
+      "image": "/images/menu/115.webp"
     },
     {
       "id": 59,
@@ -547,6 +711,132 @@
       "price": 19.95,
       "category": "Seafood",
       "image": "/images/menu/67.webp"
+    },
+    {
+      "id": 109,
+      "short": "S/S",
+      "code": "O1",
+      "name": "O1 Sweet & Sour Sauce",
+      "price": 2.5,
+      "category": "Sides & Sauces"
+    },
+    {
+      "id": 110,
+      "short": "RICE",
+      "code": "O2",
+      "name": "O2 Steam Rice",
+      "price": 2.5,
+      "category": "Sides & Sauces"
+    },
+    {
+      "id": 111,
+      "short": "CURRY",
+      "code": "O3",
+      "name": "O3 Curry Sauce",
+      "price": 4,
+      "category": "Sides & Sauces"
+    },
+    {
+      "id": 112,
+      "short": "HONEY GARLIC SAUCE",
+      "code": "O4",
+      "name": "O4 Honey Garlic Sauce",
+      "price": 4,
+      "category": "Sides & Sauces"
+    },
+    {
+      "id": 113,
+      "short": "Chili Oil",
+      "code": "O5",
+      "name": "O5. House Special Chili Oil 250ml",
+      "price": 8.99,
+      "category": "Sides & Sauces",
+      "image": "/images/menu/113.webp"
+    },
+    {
+      "id": 114,
+      "short": "Gravy",
+      "code": "O6",
+      "name": "O6 Gravy",
+      "price": 2.5,
+      "category": "Sides & Sauces"
+    },
+    {
+      "id": 30,
+      "code": "D1",
+      "name": "D1 Coke",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 31,
+      "code": "D2",
+      "name": "D2 Pepsi",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 37,
+      "code": "D8",
+      "name": "D8 Coke Zero",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 38,
+      "code": "D9",
+      "name": "D9 Diet Coke",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 39,
+      "code": "D10",
+      "name": "D10 Diet Pepsi",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 32,
+      "code": "D3",
+      "name": "D3 Ginger Ale",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 33,
+      "code": "D4",
+      "name": "D4 Ice Tea",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 34,
+      "code": "D5",
+      "name": "D5 Sprite",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 35,
+      "code": "D6",
+      "name": "D6 Dr Pepper",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 36,
+      "code": "D7",
+      "name": "D7 Root Beer",
+      "price": 2.5,
+      "category": "Drinks"
+    },
+    {
+      "id": 116,
+      "code": "D11",
+      "name": "D11 Orange Crush",
+      "price": 2.5,
+      "category": "Drinks"
     },
     {
       "id": 68,
@@ -639,7 +929,7 @@
       "short": "BEEF STEW",
       "code": "T12",
       "name": "T12 Beef Stew",
-      "price": 38.0,
+      "price": 38,
       "category": "Traditional Chinese Food & Specialties",
       "image": "/images/menu/78.webp"
     },
@@ -659,289 +949,6 @@
       "price": 18.95,
       "category": "Traditional Chinese Food & Specialties",
       "image": "/images/menu/80.webp"
-    },
-    {
-      "id": 81,
-      "short": "BUDD VEG",
-      "code": "V1",
-      "name": "V1 Buddha's Vegetables",
-      "price": 14.95,
-      "category": "Vegetables",
-      "image": "/images/menu/81.webp"
-    },
-    {
-      "id": 82,
-      "short": "BRAISE VEG",
-      "code": "V2",
-      "name": "V2 Braised Vegetables",
-      "price": 14.95,
-      "category": "Vegetables"
-    },
-    {
-      "id": 83,
-      "short": "SP VEG",
-      "code": "V3",
-      "name": "V3 Special Mixed Vegetables",
-      "price": 15.95,
-      "category": "Vegetables",
-      "image": "/images/menu/83.webp"
-    },
-    {
-      "id": 84,
-      "short": "BF VEG",
-      "code": "V4",
-      "name": "V4 Beef with Mixed Vegetables",
-      "price": 15.95,
-      "category": "Vegetables"
-    },
-    {
-      "id": 85,
-      "short": "CK VEG",
-      "code": "V5",
-      "name": "V5 Chicken with Mixed Vegetables",
-      "price": 15.95,
-      "category": "Vegetables"
-    },
-    {
-      "id": 86,
-      "short": "BBQ VEG",
-      "code": "V6",
-      "name": "V6 BBQ Pork with Mixed Vegetables",
-      "price": 15.95,
-      "category": "Vegetables"
-    },
-    {
-      "id": 87,
-      "short": "MUSH VEG",
-      "code": "V7",
-      "name": "V7 Mushroom with Mixed Vegetables",
-      "price": 14.95,
-      "category": "Vegetables",
-      "image": "/images/menu/87.webp"
-    },
-    {
-      "id": 88,
-      "code": "",
-      "name": "Combo A",
-      "price": 14.95,
-      "category": "Dinner for One",
-      "image": "/images/menu/88.webp"
-    },
-    {
-      "id": 89,
-      "code": "",
-      "name": "Combo B",
-      "price": 14.95,
-      "category": "Dinner for One",
-      "image": "/images/menu/89.webp"
-    },
-    {
-      "id": 90,
-      "code": "",
-      "name": "Dinner for Eight",
-      "price": 130.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 91,
-      "code": "",
-      "name": "Dinner for Five",
-      "price": 82.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 92,
-      "code": "",
-      "name": "Dinner for Four",
-      "price": 65.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 93,
-      "code": "",
-      "name": "Dinner for Six",
-      "price": 97.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 94,
-      "code": "",
-      "name": "Dinner for Two",
-      "price": 32.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 95,
-      "code": "",
-      "name": "Gluten Free Combo",
-      "price": 14.95,
-      "category": "Dinner for One"
-    },
-    {
-      "id": 96,
-      "code": "",
-      "name": "House Special Platter for Three or More",
-      "price": 49.95,
-      "category": "Family Dinners"
-    },
-    {
-      "id": 97,
-      "code": "",
-      "name": "Jade Special",
-      "price": 15.95,
-      "category": "Dinner for One",
-      "image": "/images/menu/97.webp"
-    },
-    {
-      "id": 98,
-      "code": "",
-      "name": "Ruby Special",
-      "price": 15.95,
-      "category": "Dinner for One",
-      "image": "/images/menu/98.webp"
-    },
-    {
-      "id": 99,
-      "code": "",
-      "name": "Spicy Combo",
-      "price": 21.95,
-      "category": "Dinner for One",
-      "image": "/images/menu/99.webp"
-    },
-    {
-      "id": 100,
-      "short": "BF FLAT RN",
-      "code": "N2",
-      "name": "N2 Beef Flat Rice Noodles",
-      "price": 19.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/100.webp"
-    },
-    {
-      "id": 101,
-      "short": "CK CM",
-      "code": "N3",
-      "name": "N3. Chicken Chow Mein (Crispy)",
-      "price": 15.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/101.webp"
-    },
-    {
-      "id": 102,
-      "short": "SHR CM",
-      "code": "N4",
-      "name": "N4 Shrimp Chow Mein",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 103,
-      "short": "BF CM",
-      "code": "N5",
-      "name": "N5 Beef Chow Mein",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 104,
-      "short": "SP LM / SP SH",
-      "code": "N6",
-      "name": "N6 House Special Low Mien or Shanghai Noodles",
-      "price": 15.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 105,
-      "short": "CK LM / CK SH",
-      "code": "N7",
-      "name": "N7 Chicken Low Mein or Shanghai Noodel",
-      "price": 14.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/105.webp"
-    },
-    {
-      "id": 106,
-      "short": "BF LM / BF SH",
-      "code": "N8",
-      "name": "N8 Beef Low Mein or Shanghai Noodle",
-      "price": 14.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/106.webp"
-    },
-    {
-      "id": 107,
-      "short": "SING FRN",
-      "code": "N9",
-      "name": "N9 Singapore Fried Rice Noodle",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/107.webp"
-    },
-    {
-      "id": 108,
-      "short": "Spicy Egg FRN",
-      "code": "N12",
-      "name": "N12 Spicy Egg Fried Rice Noodles",
-      "price": 15.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 109,
-      "short": "S/S",
-      "code": "O1",
-      "name": "O1 Sweet & Sour Sauce",
-      "price": 2.5,
-      "category": "Sides & Sauces"
-    },
-    {
-      "id": 110,
-      "short": "RICE",
-      "code": "O2",
-      "name": "O2 Steam Rice",
-      "price": 2.5,
-      "category": "Sides & Sauces"
-    },
-    {
-      "id": 111,
-      "short": "CURRY",
-      "code": "O3",
-      "name": "O3 Curry Sauce",
-      "price": 4.0,
-      "category": "Sides & Sauces"
-    },
-    {
-      "id": 112,
-      "short": "HONEY GARLIC SAUCE",
-      "code": "O4",
-      "name": "O4 Honey Garlic Sauce",
-      "price": 4.0,
-      "category": "Sides & Sauces"
-    },
-    {
-      "id": 113,
-      "short": "Chili Oil",
-      "code": "O5",
-      "name": "O5. House Special Chili Oil 250ml",
-      "price": 8.99,
-      "category": "Sides & Sauces",
-      "image": "/images/menu/113.webp"
-    },
-    {
-      "id": 114,
-      "short": "Gravy",
-      "code": "O6",
-      "name": "O6 Gravy",
-      "price": 2.5,
-      "category": "Sides & Sauces"
-    },
-    {
-      "id": 115,
-      "short": "MON RIBS",
-      "code": "P1",
-      "name": "P1. Montreal Spare Ribs",
-      "price": 15.95,
-      "category": "Pork",
-      "image": "/images/menu/115.webp"
     }
   ]
 }
