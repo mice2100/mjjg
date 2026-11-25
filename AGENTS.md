@@ -149,7 +149,7 @@ All bodies are JSON. POST/PATCH **require** `Content-Type: application/json`, wh
 | POST | `/api/auth/google` · `apple` · `facebook` | – | Body: `{credential}` / `{id_token, name}` / `{access_token}`. The token is verified server-side, then the `jg_session` cookie is set |
 | POST | `/api/auth/logout` | – | Clears the session cookie |
 | GET / PATCH | `/api/me` | session | Read or update name, phone, default_address, marketing_opt_in |
-| GET | `/api/options` | – | Option groups `{groups:[{id,name,min,max,options,item_ids}]}` for the website's choice window |
+| GET | `/api/options` | – | Option groups `{groups:[{id,name,min,max,options,item_ids}]}` for the website's choice window; staff-only groups (`STAFF_ONLY_GROUPS` in options.js: requests) are left out and refused in website orders |
 | GET | `/api/set-dinners` | – | `{contents:{<menu id>:[plain dish names]}}`, set-dinner contents for customers |
 | GET | `/api/availability` | – | `{sold_out:[menu id]}`; the order page greys these out (30 s cache) |
 | GET | `/api/kitchen/orders` · `/api/pos/orders` | kitchen, pos | All pending orders plus the last 7 days, staff shape (dollars, `time` in local time, `payments`, `paid`, `balance`, `table_id`, POS line fields `uid/sent/mods/note/disc`), plus `tickets` (open + last 12 h) and `sold_out`. `?since=<iso>` returns only orders and tickets changed after that time (max 500 each); the app polls this way and reloads fully every 10 minutes |

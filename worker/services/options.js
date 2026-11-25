@@ -29,6 +29,10 @@ const toGroup = (row) => ({
   sort: row.sort,
 });
 
+// Groups only staff can pick (POS); the website neither shows nor accepts them.
+export const STAFF_ONLY_GROUPS = ['requests'];
+export const customerGroups = (groups) => groups.filter((g) => !STAFF_ONLY_GROUPS.includes(g.id));
+
 export async function listOptionGroups(db) {
   const { results } = await db.prepare('SELECT * FROM option_groups ORDER BY sort, name').all();
   return results.map(toGroup);

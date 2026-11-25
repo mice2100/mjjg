@@ -5,7 +5,7 @@ import { HttpError } from '../lib/http.js';
 import { getMenuItem, priceCents } from '../lib/menu.js';
 import { MAX_QTY_PER_LINE, deliveryFeeCents as feeFor, taxOn } from '../lib/util.js';
 import { evaluateCoupon, findCoupon, loadCouponStats } from './coupons.js';
-import { assertAvailable, listOptionGroups, resolveMods } from './options.js';
+import { assertAvailable, customerGroups, listOptionGroups, resolveMods } from './options.js';
 
 export const DELIVERY_TYPES = ['pickup', 'delivery', 'dinein'];
 
@@ -56,7 +56,8 @@ export function resolveItems(rawItems, groups = []) {
  * opts = { items, deliveryType, deliveryPlace ('house' | 'apartment'), couponCode, source, email, phone, signedIn, strict, now }
  */
 export async function buildQuote(db, opts) {
-  const items = resolveItems(opts.items, opts.groups || (await listOptionGroups(db)));
+  // Website orders: staff-only groups (requests) are refused.
+  const items = resolveItems(opts.items, opts.groups || customerGroups(await listOptionGroups(db)));
   await assertAvailable(db, items); // dishes staff marked sold out
   const deliveryType = DELIVERY_TYPES.includes(opts.deliveryType) ? opts.deliveryType : 'pickup';
   const subtotalCents = items.reduce((sum, l) => sum + l.price_cents * l.qty, 0);

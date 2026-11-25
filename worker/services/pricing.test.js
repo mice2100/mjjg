@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { resolveItems, tipCents } from './pricing.js';
+import { customerGroups } from './options.js';
 
 const base = { foodCents: 4000, totalBeforeTipCents: 4440 }; // $40 food + 11% tax
 
@@ -43,4 +44,15 @@ test('online lines merge only when the options match', () => {
   const lines = resolveItems([{ id: 94, qty: 1, mods: [ck] }, { id: 94, qty: 1, mods: [pk] }, { id: 94, qty: 1, mods: [ck] }], GROUPS);
   assert.deepEqual(lines.map((l) => [l.mods[0].n, l.qty]), [['Chicken Balls', 2], ['Sweet & Sour Pork', 1]]);
   assert.throws(() => resolveItems([{ id: 94, qty: 1, mods: [{ g: 'dinner_meat', n: 'Beef' }] }], GROUPS), /not an option/);
+});
+
+test('website orders cannot pick staff-only requests', () => {
+  const groups = [
+    { id: 'requests', name: 'Requests', min: 0, max: 9, options: [{ name: 'No onion', price_cents: 0 }], item_ids: [1] },
+    { id: 'spice', name: 'Spice level', min: 0, max: 1, options: [{ name: 'Hot', price_cents: 0 }], item_ids: [1] },
+  ];
+  const online = customerGroups(groups);
+  assert.deepEqual(online.map((g) => g.id), ['spice']);
+  assert.throws(() => resolveItems([{ id: 1, qty: 1, mods: [{ g: 'requests', n: 'No onion' }] }], online), /no longer applies/);
+  assert.equal(resolveItems([{ id: 1, qty: 1, mods: [{ g: 'spice', n: 'Hot' }] }], online)[0].mods[0].n, 'Hot');
 });
