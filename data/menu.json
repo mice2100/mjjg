@@ -482,8 +482,8 @@
     {
       "id": 118,
       "short": "CK FRN",
-      "code": "N13",
-      "name": "N13 Chicken Fried Rice Noodles",
+      "code": "N9",
+      "name": "N9 Chicken Fried Rice Noodles",
       "price": 14.95,
       "category": "Noodles & Chow Mein",
       "gf": true
@@ -491,8 +491,8 @@
     {
       "id": 119,
       "short": "SHR FRN",
-      "code": "N14",
-      "name": "N14 Shrimp Fried Rice Noodles",
+      "code": "N10",
+      "name": "N10 Shrimp Fried Rice Noodles",
       "price": 15.95,
       "category": "Noodles & Chow Mein",
       "gf": true
