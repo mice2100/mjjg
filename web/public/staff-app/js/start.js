@@ -9,7 +9,7 @@ function openStart(type, { pendingItem = null, phone = '', edit = false } = {}) 
   U.start = {
     edit, type: d ? d.type : type === 'delivery' ? 'delivery' : 'pickup',
     phone: d ? d.phone : digitsOf(phone), name: d ? d.name : '', notes: d ? d.notes : '',
-    slot: d ? d.slot : '', slotDay: 0,
+    slot: d ? d.slot : '', tmode: timeMode(d ? d.slot : ''), tdate: null, cal: 0,
     savedAddr: d && d.type === 'delivery' ? d.addr : '', place: d ? d.place : null, addrIdx: -1, street: '', apt: '', hotel: null,
     lookup: null, state: 'idle', err: '', seq: 0, hist: -1, pendingItem, tried: false, ac: { list: [], i: -1 },
   };
@@ -97,18 +97,79 @@ function startPlace() {
   return guessPlace(startAddress());
 }
 
-// Pickup / delivery time: ASAP or one 30-minute slot in take-out hours (mice2100's slots module).
+// Pickup / delivery time. Kept short on screen: ASAP, "in 15 / 20 / 30 / 40 min" (pickup),
+// "Pick a time" (today's 30-minute slots) or "Pick a date" (a calendar; a future date needs a slot).
+// Hours and closed days come from mice2100's slots module (web/src/lib/slots.js, /js/slots.js).
+const DOW3 = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON3 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const PICKUP_OFFSETS = [15, 20, 30, 40];
+const CAL_DAYS_AHEAD = 60;
+// Restaurant clock (America/Regina, UTC-6 all year): a Date whose UTC fields read as Regina time.
+const reginaNow = () => new Date(Date.now() - 6 * 3600 * 1000);
+const ymdOf = (d) => d.toISOString().slice(0, 10);
+const dateOfYmd = (ymd) => new Date(ymd + 'T00:00:00Z');
+const clockLabel = (min) => { const h = Math.floor(min / 60) % 24, m = Math.round(min % 60); return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+const isClosedDay = (d) => (S.slots?.CLOSED_WEEKDAYS || [1]).includes(d.getUTCDay());
+
+// 30-minute slots of one day; today starts at the next half hour.
+function daySlots(ymd) {
+  const L = S.slots, now = reginaNow(), today = ymdOf(now) === ymd, d = dateOfYmd(ymd);
+  if (!L || isClosedDay(d)) return [];
+  const nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  let first = L.OPEN_FROM_MIN;
+  if (today) first = Math.max(first, (Math.floor(nowMin / L.SLOT_MINUTES) + 1) * L.SLOT_MINUTES);
+  const short = `${DOW3[d.getUTCDay()]} ${MON3[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  const out = [];
+  for (let m = first; m + L.SLOT_MINUTES <= L.OPEN_TO_MIN; m += L.SLOT_MINUTES) out.push({ label: L.slotLabel(m), value: today ? L.slotLabel(m) : `${short} · ${L.slotLabel(m)}` });
+  return out;
+}
+
+function timeMode(slot) {
+  if (!slot) return 'asap';
+  if (/\(in \d+ min\)/.test(slot)) return 'off';
+  if (slot.includes(' · ')) return 'date';
+  return 'time';
+}
+
 function slotsHtml() {
   const s = U.start;
   if (!S.slots) return '';
-  const days = S.slots.getSlotDays(new Date());
-  if (s.slot) { const i = days.findIndex((d) => d.slots.some((x) => x.value === s.slot)); if (i >= 0) s.slotDay = i; }
-  const day = days[Math.min(s.slotDay, days.length - 1)];
-  const tabs = days.map((d, i) => `<button type="button" class="chip ${d === day ? 'on' : ''}" data-act="slotDay" data-i="${i}">${esc(d.label)}</button>`).join('');
-  const chips = day ? (day.isToday ? `<button type="button" class="chip ${!s.slot ? 'on' : ''}" data-act="slot" data-v="">ASAP</button>` : '')
-    + day.slots.map((x) => `<button type="button" class="chip ${s.slot === x.value ? 'on' : ''}" data-act="slot" data-v="${esc(x.value)}">${esc(x.label)}</button>`).join('') : '';
-  return `<div class="field"><label>${s.type === 'delivery' ? 'Delivery' : 'Pickup'} time <span class="muted">· ${esc(s.slot || 'ASAP')}</span></label>
-    <div class="chips">${tabs}</div><div class="chips slots">${chips || '<span class="muted">No time slots left.</span>'}</div></div>`;
+  const pickup = s.type !== 'delivery';
+  const m = s.tmode;
+  const chip = (act, attrs, label, on) => `<button type="button" class="chip ${on ? 'on' : ''}" data-act="${act}" ${attrs}>${label}</button>`;
+  const now = reginaNow(), nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+  let row = chip('tmode', 'data-m="asap"', 'ASAP', m === 'asap');
+  if (pickup) row += PICKUP_OFFSETS.map((n) => chip('toff', `data-n="${n}"`, `${n} min`, m === 'off' && s.slot.includes(`(in ${n} min)`))).join('');
+  row += chip('tmode', 'data-m="time"', 'Pick a time', m === 'time') + chip('tmode', 'data-m="date"', 'Pick a date', m === 'date');
+  let more = '';
+  if (m === 'time') {
+    const list = daySlots(ymdOf(now));
+    more = `<div class="chips slots">${list.map((x) => chip('slot', `data-v="${esc(x.value)}"`, esc(x.label), s.slot === x.value)).join('') || '<span class="muted">No time slots left today. Pick a date.</span>'}</div>`;
+  } else if (m === 'date') {
+    const base = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + s.cal, 1));
+    const last = new Date(now.getTime() + CAL_DAYS_AHEAD * 86400000), todayYmd = ymdOf(now);
+    const cells = [];
+    for (let i = 0; i < base.getUTCDay(); i++) cells.push('<span></span>');
+    for (let day = 1; ; day++) {
+      const d = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), day));
+      if (d.getUTCMonth() !== base.getUTCMonth()) break;
+      const ymd = ymdOf(d), off = ymd < todayYmd || d > last || isClosedDay(d) || !daySlots(ymd).length;
+      cells.push(`<button type="button" class="cal-day ${s.tdate === ymd ? 'on' : ''} ${ymd === todayYmd ? 'today' : ''}" data-act="tdate" data-d="${ymd}" ${off ? 'disabled' : ''}>${day}</button>`);
+    }
+    const head = `<div class="cal-head"><button type="button" class="btn sm" data-act="tcal" data-d="-1" ${s.cal <= 0 ? 'disabled' : ''}>‹</button>
+      <b>${MON3[base.getUTCMonth()]} ${base.getUTCFullYear()}</b><button type="button" class="btn sm" data-act="tcal" data-d="1" ${s.cal >= 2 ? 'disabled' : ''}>›</button></div>`;
+    more = `<div class="cal">${head}<div class="cal-grid">${DOW3.map((x) => `<span class="cal-dow">${x.slice(0, 2)}</span>`).join('')}${cells.join('')}</div></div>`;
+    if (s.tdate) more += `<div class="chips slots">${daySlots(s.tdate).map((x) => chip('slot', `data-v="${esc(x.value)}"`, esc(x.label), s.slot === x.value)).join('')}</div>`;
+  }
+  const e = s.tried ? startErrors() : {};
+  return `<div class="field"><label>${pickup ? 'Pickup' : 'Delivery'} time <span class="muted">· ${esc(s.slot || 'ASAP')}</span></label>
+    <div class="chips">${row}</div>${more}${e.slot ? `<span class="ferr">${e.slot}</span>` : ''}</div>`;
+}
+
+// "in 20 min" → "1:05 PM (in 20 min)"; stored on the order like a slot.
+function pickupIn(n) {
+  const now = reginaNow(), min = now.getUTCHours() * 60 + now.getUTCMinutes() + Number(n);
+  return `${clockLabel(min)} (in ${n} min)`;
 }
 
 function aptInput(e) {
@@ -124,6 +185,7 @@ function startErrors() {
   if (s.type === 'delivery' && s.phone.length !== 10) e.phone = 'Delivery needs a phone number.';
   if (s.type === 'pickup' && !s.phone && !s.name.trim()) e.name = 'Enter a name or a phone number.';
   if (s.type === 'delivery' && !startAddress()) e.addr = 'Enter the delivery address.';
+  if (s.type !== 'dinein' && s.tmode === 'date' && !s.slot) e.slot = s.tdate ? 'Pick a time for that date.' : 'Pick a date and a time.';
   if (startAddress() && needsUnit()) {
     const a = startAddress();
     e.apt = isTrailer(a) ? 'Trailer court delivery: enter the lot number (e.g. A24).' : isHotelAddress(a) ? 'Hotel delivery: enter the room number (or Lobby).' : 'Apartment delivery: enter the unit / suite / apt number (or Lobby).';

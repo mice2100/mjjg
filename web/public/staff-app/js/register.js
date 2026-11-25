@@ -71,12 +71,12 @@ function floorHtml() {
     else {
       const per = Math.floor(t.seats / 2), x0 = inset[3], span = 100 - inset[3] - inset[1];
       for (let i = 0; i < per; i++) { const x = x0 + ((i + 0.5) * span) / per; chairs.push([x, 11, 0], [x, 89, 180]); }
-      if (kind === 'l1') chairs.push([5, 50, -90]);
+      if (kind === 'l1' && t.seats % 2) chairs.push([5, 50, -90]); // an odd seat at the end
     }
     const ch = chairs.map(([x, y, a]) => `<span class="chair" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;--a:${a.toFixed(0)}deg"></span>`).join('');
     const topStyle = `top:${inset[0]}%;right:${inset[1]}%;bottom:${inset[2]}%;left:${inset[3]}%`;
     if (!o) return `<button class="tbl ${kind === 'round' ? 'round' : ''} ${slim}" style="${box(t)}" data-act="table" data-id="${t.id}" title="${t.id} · free · ${t.seats} seats" aria-label="Table ${t.id}, free, ${t.seats} seats">
-      ${ch}<span class="top" style="${topStyle}"><span class="tno">${t.id}</span><span class="tsub">${t.seats} seats</span></span></button>`;
+      ${ch}<span class="top" style="${topStyle}"><span class="tno">${t.id}</span></span></button>`;
     const pend = unsentOf(o), m = mins(o.created_at);
     return `<button class="tbl busy ${kind === 'round' ? 'round' : ''} ${slim}" style="${box(t)}" data-act="viewOrder" data-id="${esc(o.id)}" title="${t.id} · ${esc(o.id)} · ${m} min · ${$m(o.total)}${pend ? ' · ' + pend + ' unsent' : ''}" aria-label="Table ${t.id}, seated ${m} minutes, ${$m(o.total)}">
       ${ch}<span class="top" style="${topStyle}">${pend ? '<span class="udot" aria-hidden="true"></span>' : ''}<span class="tno">${t.id}</span><span class="tsub">${m} min</span>${t.w < 10 ? '' : `<span class="tsub tamt">${$m(o.total)}</span>`}</span></button>`;
@@ -135,11 +135,13 @@ function orderDetail(o, inPanel) {
   const open = o.status === 'pending', btns = [];
   const done = o.delivery_type === 'delivery' ? 'Out for delivery' : o.delivery_type === 'dinein' ? 'Close check' : 'Picked up';
   if (open) {
-    btns.push(`<button class="btn danger ghost" data-act="askCancel" data-id="${esc(o.id)}">Cancel order</button>${printButtons(o.id)}<span style="flex:1"></span>`);
+    // Row 1: cancel / received / edit. Row 2: print, then Complete (picked up, delivered or check closed).
+    // Payments are taken on the order screen (Edit order → Pay).
+    btns.push(`<button class="btn danger ghost" data-act="askCancel" data-id="${esc(o.id)}">Cancel order</button><span style="flex:1"></span>`);
     if (!isPos(o) && !o.received_at) btns.push(`<button class="btn accent" data-act="received" data-id="${esc(o.id)}">Received</button>`);
     if (isPos(o) && can.order) btns.push(`<button class="btn" data-act="open" data-id="${esc(o.id)}">Edit order</button>`);
-    if (o.balance > 0 && o.payment_status === 'in_store' && isPos(o) && can.pay) btns.push(`<button class="btn accent" data-act="payOrder" data-id="${esc(o.id)}">Take payment · ${$m(o.balance)}</button>`);
-    else btns.push(`<button class="btn accent" data-act="complete" data-id="${esc(o.id)}">${o.balance > 0 ? `Collected ${$m(o.balance)} · ${done}` : done}</button>`);
+    btns.push('<span style="flex-basis:100%;height:0"></span>');
+    btns.push(`${printButtons(o.id)}<span style="flex:1"></span><button class="btn accent" data-act="complete" data-id="${esc(o.id)}" title="${done}">Complete</button>`);
   } else {
     btns.push(`<button class="btn" data-act="reopen" data-id="${esc(o.id)}">Reopen</button><span style="flex:1"></span>`);
     btns.push(`${printButtons(o.id)}<button class="btn accent" data-act="${inPanel ? 'unsel' : 'close'}">Close</button>`);

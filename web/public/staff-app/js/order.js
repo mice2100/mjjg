@@ -167,7 +167,7 @@ function orderPanel(d) {
     const opts = TABLES.map((t) => {
       const other = openTableOrder(t.id);
       const busy = other && other.id !== d.id;
-      return `<option value="${t.id}" ${d.table === t.id ? 'selected' : ''} ${busy ? 'disabled' : ''}>Table ${t.id} · ${t.seats} seats${busy ? ' (occupied)' : ''}</option>`;
+      return `<option value="${t.id}" ${d.table === t.id ? 'selected' : ''} ${busy ? 'disabled' : ''}>Table ${t.id}${busy ? ' (occupied)' : ''}</option>`;
     }).join('');
     fields = `<div class="field wide"><label for="f-table">Table</label><select id="f-table" class="input" data-change="table"><option value="">No table</option>${opts}</select></div>`;
   } else {

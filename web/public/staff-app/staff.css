@@ -510,3 +510,12 @@ body.osk-open .fanwrap{display:none}
 .osk-side .osk-done{max-width:none;flex:1}
 .chips.slots{max-height:132px;overflow:auto}
 .chips.slots .chip{min-width:118px;text-align:center}
+/* pickup / delivery date calendar */
+.cal{border:1px solid var(--line);border-radius:12px;padding:8px;max-width:360px}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
+.cal-day{border:1px solid var(--line);background:var(--surface);border-radius:8px;min-height:38px;font-weight:600}
+.cal-day.today{border-color:var(--navy)}
+.cal-day.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.cal-day:disabled{opacity:.3}
