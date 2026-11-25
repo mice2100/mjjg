@@ -6,7 +6,7 @@ import { DELIVERY_FEES_CENTS, TAX_RATE_PERCENT, normalizeEmail, normalizePhone }
 import { TIP_CHOICES, buildQuote } from '../services/pricing.js';
 import { createOrder, expireUnpaidOrders, getPublicOrderStatus, reconcileCloverPayments, setCheckoutSession } from '../services/orders.js';
 import { createCheckout, isCloverConfigured } from '../services/clover.js';
-import { listSoldOut } from '../services/options.js';
+import { listOptionGroups, listSoldOut } from '../services/options.js';
 import { PLACES, deliveryPlaceFor } from '../lib/places.js';
 import { getSessionCustomerId } from '../auth/session.js';
 import streets from '../../data/moose_jaw_streets.json' with { type: 'json' };
@@ -28,6 +28,12 @@ export function getConfig(request, env) {
 
 export function getMenuRoute() {
   return json({ success: true, menu: getMenu() }, { headers: { 'Cache-Control': 'public, max-age=300' } });
+}
+
+// Dish options for the website (choices such as chicken balls / sweet & sour pork, extra people).
+export async function getOptions(request, env) {
+  const groups = (await listOptionGroups(env.DB)).map(({ id, name, min, max, options, item_ids }) => ({ id, name, min, max, options, item_ids }));
+  return json({ success: true, groups }, { headers: { 'Cache-Control': 'public, max-age=60' } });
 }
 
 // Dishes staff marked sold out (the website greys them out). Short cache: staff flip these during service.

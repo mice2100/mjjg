@@ -22,6 +22,7 @@ const ROUTES = [
   ['GET', '/api/config', pub.getConfig],
   ['GET', '/api/menu', pub.getMenuRoute],
   ['GET', '/api/availability', pub.getAvailability],
+  ['GET', '/api/options', pub.getOptions],
   ['GET', '/api/streets', pub.getStreets],
   ['POST', '/api/quote', pub.postQuote],
   ['POST', '/api/orders', pub.postOrder],

@@ -4,14 +4,15 @@ import { getConfig, getCustomer, onCustomerChange, updateProfile } from './accou
 import { searchMenu, searchStreets, searchPlaces, fuzzyHighlight } from '../lib/search.js';
 import { hasUnit } from '../lib/address.js';
 
-const STORAGE_KEY = 'jg_cart_v2';
+const STORAGE_KEY = 'jg_cart_v3'; // v3: lines with options; v2 (id → qty) is read once and converted
 const PENDING_KEY = 'jg_pending_payment'; // {id, t} while the customer is on the Clover page
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const money = (cents) => `$${(cents / 100).toFixed(2)}`;
 
 let menu = new Map();
-let state = { items: {}, delivery_type: 'pickup', coupon_code: '', tip: 'none' };
+let state = { lines: [], delivery_type: 'pickup', coupon_code: '', tip: 'none' }; // lines: [{id, qty, mods: [{g, n}]}]
+let groups = []; // option groups from /api/options
 let quote = null;
 let quoteTimer = null;
 let turnstileToken = '';
@@ -23,12 +24,19 @@ let soldOut = new Set(); // menu ids from /api/availability
 function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved?.items) state = { ...state, ...saved };
+    if (saved?.lines) state = { ...state, ...saved };
+    else {
+      const old = JSON.parse(localStorage.getItem('jg_cart_v2') || 'null');
+      if (old?.items) {
+        const { items, ...rest } = old;
+        state = { ...state, ...rest, lines: Object.entries(items).map(([id, qty]) => ({ id: Number(id), qty, mods: [] })) };
+      }
+    }
   } catch {
     /* ignore */
   }
-  // Drop items no longer on the menu.
-  for (const id of Object.keys(state.items)) if (!menu.has(Number(id))) delete state.items[id];
+  // Drop dishes no longer on the menu.
+  state.lines = (state.lines || []).filter((l) => menu.has(Number(l.id)) && l.qty > 0);
 }
 
 function save() {
@@ -39,15 +47,90 @@ function save() {
   }
 }
 
-const cartItems = () => Object.entries(state.items).map(([id, qty]) => ({ id: Number(id), qty }));
-const itemCount = () => Object.values(state.items).reduce((a, b) => a + b, 0);
+const cartItems = () => state.lines.map((l) => ({ id: l.id, qty: l.qty, mods: l.mods }));
+const itemCount = () => state.lines.reduce((a, l) => a + l.qty, 0);
+const qtyOf = (id) => state.lines.filter((l) => l.id === id).reduce((a, l) => a + l.qty, 0);
 
-function setQty(id, qty) {
-  if (qty <= 0) delete state.items[id];
-  else state.items[id] = Math.min(qty, 50);
+// ---- dish options (same groups as the POS; the server checks and prices them) ----
+const groupsFor = (id) => groups.filter((g) => g.item_ids.includes(id));
+// A dish opens the choice window when it has a required choice or an option that costs extra.
+const needsChoice = (id) => groupsFor(id).some((g) => g.min > 0 || g.options.some((o) => o.price_cents > 0));
+const modKey = (mods) => mods.map((m) => `${m.g}:${m.n}`).sort().join(',');
+const optionOf = (m) => groups.find((g) => g.id === m.g)?.options.find((o) => o.name === m.n);
+const unitCents = (l) => Math.round(menu.get(l.id).price * 100) + l.mods.reduce((sum, m) => sum + (optionOf(m)?.price_cents || 0), 0);
+
+function changed() {
   save();
   render();
   requestQuote();
+}
+function addLine(id, mods = [], qty = 1) {
+  const key = modKey(mods);
+  const line = state.lines.find((l) => l.id === id && modKey(l.mods) === key);
+  if (line) line.qty = Math.min(line.qty + qty, 50);
+  else state.lines.push({ id, qty, mods });
+  changed();
+}
+function setLineQty(line, qty) {
+  if (qty <= 0) state.lines = state.lines.filter((l) => l !== line);
+  else line.qty = Math.min(qty, 50);
+  changed();
+}
+// Dishes without choices: one line, changed with − / + on the menu row.
+function setQty(id, qty) {
+  const line = state.lines.find((l) => l.id === id && !l.mods.length);
+  if (line) setLineQty(line, qty);
+  else if (qty > 0) addLine(id, [], qty);
+}
+function tapAdd(id) {
+  if (soldOut.has(id)) return;
+  if (needsChoice(id)) openChoice(id);
+  else setQty(id, qtyOf(id) + 1);
+}
+
+let choiceDialog = null;
+function openChoice(id) {
+  const item = menu.get(id);
+  if (!choiceDialog) {
+    choiceDialog = document.createElement('dialog');
+    choiceDialog.className = 'opt-dialog';
+    document.body.append(choiceDialog);
+    choiceDialog.addEventListener('click', (e) => e.target === choiceDialog && choiceDialog.close());
+  }
+  const list = groupsFor(id);
+  const pick = Object.fromEntries(list.map((g) => [g.id, []]));
+  let qty = 1;
+  const d = choiceDialog;
+  const draw = () => {
+    const mods = list.flatMap((g) => pick[g.id].map((n) => ({ g: g.id, n })));
+    const missing = list.filter((g) => pick[g.id].length < g.min);
+    const total = unitCents({ id, mods }) * qty;
+    d.innerHTML = `<form method="dialog" class="opt-form">
+      <header><h3></h3><button type="button" class="opt-x" aria-label="Close">✕</button></header>
+      <div class="opt-groups">${list.map((g) => `<fieldset data-g="${g.id}"><legend>${g.name}${g.min ? ' <span class="opt-req">Required</span>' : ''}<small>${g.max === 1 ? 'Pick one' : 'Pick any'}</small></legend>
+        ${g.options.map((o) => `<label class="opt-row"><input type="${g.max === 1 ? 'radio' : 'checkbox'}" name="g-${g.id}" value="${o.name.replace(/"/g, '&quot;')}" ${pick[g.id].includes(o.name) ? 'checked' : ''}>
+          <span class="opt-name"></span><span class="opt-price">${o.price_cents ? '+' + money(o.price_cents) : ''}</span></label>`).join('')}</fieldset>`).join('')}</div>
+      <footer><span class="qty"><button type="button" data-q="-1" aria-label="One less">−</button><span>${qty}</span><button type="button" data-q="1" aria-label="One more">+</button></span>
+        <button type="button" class="btn-add" ${missing.length ? 'disabled' : ''}>${missing.length ? `Pick: ${missing[0].name}` : `Add · ${money(total)}`}</button></footer>
+    </form>`;
+    d.querySelector('h3').textContent = item.name;
+    // option names as text (they come from the restaurant's settings)
+    list.forEach((g) => d.querySelectorAll(`fieldset[data-g="${g.id}"] .opt-name`).forEach((el, i) => (el.textContent = g.options[i].name)));
+    d.querySelector('.opt-x').onclick = () => d.close();
+    d.querySelectorAll('input').forEach((inp) => (inp.onchange = () => {
+      const g = list.find((x) => `g-${x.id}` === inp.name);
+      pick[g.id] = [...d.querySelectorAll(`input[name="g-${g.id}"]:checked`)].map((x) => x.value).slice(0, g.max);
+      draw();
+    }));
+    d.querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { qty = Math.max(1, Math.min(50, qty + Number(b.dataset.q))); draw(); }));
+    d.querySelector('.btn-add').onclick = () => {
+      if (missing.length) return;
+      d.close();
+      addLine(id, mods, qty);
+    };
+  };
+  draw();
+  d.showModal();
 }
 
 function contact() {
@@ -86,7 +169,7 @@ function requestQuote() {
 
 function localEstimate() {
   let subtotal = 0;
-  for (const { id, qty } of cartItems()) subtotal += Math.round(menu.get(id).price * 100) * qty;
+  for (const l of state.lines) subtotal += unitCents(l) * l.qty;
   const fee = state.delivery_type === 'delivery' ? 700 : 0; // house rate until the server sees the address
   const tax = Math.round((subtotal * 11) / 100); // food only; delivery is not taxed
   const before = subtotal + fee + tax;
@@ -153,7 +236,8 @@ function renderCouponMessage() {
 function render() {
   const lines = $('[data-lines]');
   lines.replaceChildren();
-  for (const { id, qty } of cartItems()) {
+  for (const line of state.lines) {
+    const { id, qty } = line;
     const item = menu.get(id);
     const li = document.createElement('li');
     li.className = 'cart-line';
@@ -161,11 +245,17 @@ function render() {
       <span class="qty"><button type="button" aria-label="Remove one">−</button><span></span><button type="button" aria-label="Add one">+</button></span>
       <span class="line-price"></span>`;
     li.querySelector('.ln').textContent = `${item.code ? item.code + ' ' : ''}${item.name}`;
+    if (line.mods.length) {
+      const small = document.createElement('small');
+      small.className = 'ln-mods';
+      small.textContent = line.mods.map((m) => m.n).join(', ');
+      li.querySelector('.ln').append(small);
+    }
     li.querySelector('.qty span').textContent = qty;
-    li.querySelector('.line-price').textContent = money(Math.round(item.price * 100) * qty);
+    li.querySelector('.line-price').textContent = money(unitCents(line) * qty);
     const [minus, plus] = li.querySelectorAll('button');
-    minus.onclick = () => setQty(id, qty - 1);
-    plus.onclick = () => setQty(id, qty + 1);
+    minus.onclick = () => setLineQty(line, qty - 1);
+    plus.onclick = () => setLineQty(line, qty + 1);
     lines.append(li);
   }
   const count = itemCount();
@@ -174,11 +264,28 @@ function render() {
   $$('.seg button').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.type === state.delivery_type)));
   $('[data-address-field]').hidden = state.delivery_type !== 'delivery';
   $$('[data-add]').forEach((b) => {
-    const q = state.items[b.dataset.add];
-    const out = soldOut.has(Number(b.dataset.add));
+    const id = Number(b.dataset.add);
+    const q = qtyOf(id);
+    const out = soldOut.has(id);
+    const choice = needsChoice(id);
+    let step = b.nextElementSibling?.classList.contains('mi-step') ? b.nextElementSibling : null;
+    if (!step) {
+      step = document.createElement('span');
+      step.className = 'qty mi-step';
+      step.innerHTML = '<button type="button" aria-label="Remove one">−</button><span></span><button type="button" aria-label="Add one">+</button>';
+      const [minus, plus] = step.querySelectorAll('button');
+      minus.onclick = () => setQty(id, qtyOf(id) - 1);
+      plus.onclick = () => setQty(id, qtyOf(id) + 1);
+      b.after(step);
+    }
+    // − / + for plain dishes; dishes with choices keep "Add" (each choice is its own cart line).
+    const stepper = q > 0 && !choice && !out;
+    step.hidden = !stepper;
+    step.querySelector('span').textContent = q;
+    b.hidden = stepper;
     b.disabled = out;
-    b.classList.toggle('in-cart', Boolean(q));
-    b.textContent = out ? 'Sold out' : q ? `${q} ✓` : 'Add';
+    b.classList.toggle('in-cart', Boolean(q) && choice);
+    b.textContent = out ? 'Sold out' : q && choice ? `Add · ${q} in cart` : 'Add';
   });
   const bar = $('[data-cart-open]');
   bar.hidden = count === 0;
@@ -543,19 +650,32 @@ export function initOrderPage() {
   const params = new URLSearchParams(location.search);
   if (['pickup', 'delivery'].includes(params.get('type'))) state.delivery_type = params.get('type');
   const addId = Number(params.get('add'));
-  if (menu.has(addId)) state.items[addId] = (state.items[addId] || 0) + 1;
   if (params.has('add') || params.has('type')) history.replaceState(null, '', location.pathname);
   if (params.get('code')) state.coupon_code = params.get('code').toUpperCase();
   save();
 
-  $$('[data-add]').forEach((b) => (b.onclick = () => setQty(b.dataset.add, (state.items[b.dataset.add] || 0) + 1)));
+  $$('[data-add]').forEach((b) => (b.onclick = () => tapAdd(Number(b.dataset.add))));
+  // Dish options (chicken balls or sweet & sour pork, extra people, …). Until they load, dishes add plainly.
+  fetch('/api/options')
+    .then((r) => r.json())
+    .then((data) => {
+      groups = data.groups || [];
+      // Saved lines keep only options that still exist.
+      for (const l of state.lines) l.mods = (l.mods || []).filter((m) => optionOf(m));
+      if (menu.has(addId)) tapAdd(addId);
+      save();
+      render();
+      requestQuote();
+    })
+    .catch(() => menu.has(addId) && tapAdd(addId));
   // Dishes the restaurant marked sold out today (staff Menu tab): grey them out and take
   // them out of a saved cart. The server refuses them anyway.
   fetch('/api/availability')
     .then((r) => r.json())
     .then((data) => {
       soldOut = new Set(data.sold_out || []);
-      Object.keys(state.items).filter((id) => soldOut.has(Number(id))).forEach((id) => setQty(id, 0));
+      state.lines = state.lines.filter((l) => !soldOut.has(l.id));
+      save();
       render();
     })
     .catch(() => {});

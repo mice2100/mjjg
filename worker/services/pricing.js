@@ -5,7 +5,7 @@ import { HttpError } from '../lib/http.js';
 import { getMenuItem, priceCents } from '../lib/menu.js';
 import { MAX_QTY_PER_LINE, deliveryFeeCents as feeFor, taxOn } from '../lib/util.js';
 import { evaluateCoupon, findCoupon, loadCouponStats } from './coupons.js';
-import { assertAvailable } from './options.js';
+import { assertAvailable, listOptionGroups, resolveMods } from './options.js';
 
 export const DELIVERY_TYPES = ['pickup', 'delivery', 'dinein'];
 
@@ -20,8 +20,11 @@ export function tipCents(choice, { foodCents, totalBeforeTipCents }) {
   return Math.round((Math.max(0, foodCents) * percent) / 100);
 }
 
-// [{id, qty}] from the client -> [{id, code, name, price_cents, qty}] from the menu.
-export function resolveItems(rawItems) {
+// [{id, qty, mods}] from the client -> [{id, code, name, price_cents, qty, mods}] from the menu.
+// mods = [{g, n}] picked options; the server checks them against the option groups (required
+// choices such as chicken balls / sweet & sour pork) and adds their prices. Same dish with the
+// same options = one line.
+export function resolveItems(rawItems, groups = []) {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw new HttpError(400, 'Your cart is empty.');
   }
@@ -31,16 +34,19 @@ export function resolveItems(rawItems) {
     const qty = Math.floor(Number(raw?.qty));
     if (!item) throw new HttpError(400, `Unknown menu item: ${raw?.id}`);
     if (!(qty >= 1)) throw new HttpError(400, `Invalid quantity for ${item.name}`);
-    const line = merged.get(item.id) || {
+    const mods = resolveMods(groups, item.id, raw?.mods);
+    const key = `${item.id}|${mods.map((m) => `${m.g}:${m.n}`).sort().join(',')}`;
+    const line = merged.get(key) || {
       id: item.id,
       code: item.code,
       name: item.name,
-      price_cents: priceCents(item),
+      price_cents: priceCents(item) + mods.reduce((sum, m) => sum + m.price_cents, 0), // per unit, options included
       qty: 0,
+      ...(mods.length ? { mods } : {}),
     };
     line.qty += qty;
     if (line.qty > MAX_QTY_PER_LINE) throw new HttpError(400, `Too many of ${item.name}; please call us for large orders.`);
-    merged.set(item.id, line);
+    merged.set(key, line);
   }
   return [...merged.values()];
 }
@@ -50,7 +56,7 @@ export function resolveItems(rawItems) {
  * opts = { items, deliveryType, deliveryPlace ('house' | 'apartment'), couponCode, source, email, phone, signedIn, strict, now }
  */
 export async function buildQuote(db, opts) {
-  const items = resolveItems(opts.items);
+  const items = resolveItems(opts.items, opts.groups || (await listOptionGroups(db)));
   await assertAvailable(db, items); // dishes staff marked sold out
   const deliveryType = DELIVERY_TYPES.includes(opts.deliveryType) ? opts.deliveryType : 'pickup';
   const subtotalCents = items.reduce((sum, l) => sum + l.price_cents * l.qty, 0);
