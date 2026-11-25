@@ -46,6 +46,7 @@
       "name": "Spicy Combo",
       "price": 21.95,
       "category": "Dinner for One",
+      "spicy": true,
       "image": "/images/menu/99.webp"
     },
     {
@@ -251,6 +252,7 @@
       "name": "F8 Spicy Egg Fried Rice",
       "price": 13.95,
       "category": "Fried Rice",
+      "spicy": true,
       "image": "/images/menu/47.webp"
     },
     {
@@ -453,6 +455,7 @@
       "price": 16.95,
       "category": "Noodles & Chow Mein",
       "gf": true,
+      "spicy": true,
       "image": "/images/menu/107.webp"
     },
     {
@@ -478,7 +481,8 @@
       "code": "N8",
       "name": "N8 Spicy Egg Fried Rice Noodles",
       "price": 15.95,
-      "category": "Noodles & Chow Mein"
+      "category": "Noodles & Chow Mein",
+      "spicy": true
     },
     {
       "id": 118,
@@ -585,7 +589,8 @@
       "code": "C3",
       "name": "C3 Honey Garlic Sesame Chicken Wings",
       "price": 18.95,
-      "category": "Chicken"
+      "category": "Chicken",
+      "spicy": true
     },
     {
       "id": 20,
@@ -656,7 +661,8 @@
       "code": "C11",
       "name": "C11 Curry Chicken",
       "price": 15.95,
-      "category": "Chicken"
+      "category": "Chicken",
+      "spicy": true
     },
     {
       "id": 28,
@@ -665,6 +671,7 @@
       "name": "C12 Kung Pao Chicken",
       "price": 15.95,
       "category": "Chicken",
+      "spicy": true,
       "image": "/images/menu/28.webp"
     },
     {
@@ -715,7 +722,8 @@
       "code": "B5",
       "name": "B5 Shredded Beef (with Hot Vegetables)",
       "price": 16.95,
-      "category": "Beef"
+      "category": "Beef",
+      "spicy": true
     },
     {
       "id": 13,
@@ -723,7 +731,8 @@
       "code": "B6",
       "name": "B6 Curry Beef",
       "price": 16.95,
-      "category": "Beef"
+      "category": "Beef",
+      "spicy": true
     },
     {
       "id": 14,
@@ -740,6 +749,7 @@
       "name": "B8 Ginger Beef",
       "price": 16.95,
       "category": "Beef",
+      "spicy": true,
       "image": "/images/menu/15.webp"
     },
     {
@@ -749,6 +759,7 @@
       "name": "B9 Szechwan Beef",
       "price": 16.95,
       "category": "Beef",
+      "spicy": true,
       "image": "/images/menu/16.webp"
     },
     {
@@ -805,6 +816,7 @@
       "name": "S1 Pan Fried Squids (with Chili Salt)",
       "price": 19.95,
       "category": "Seafood",
+      "spicy": true,
       "image": "/images/menu/59.webp"
     },
     {
@@ -822,7 +834,8 @@
       "code": "S3",
       "name": "S3 Kung Pao Shrimps",
       "price": 18.95,
-      "category": "Seafood"
+      "category": "Seafood",
+      "spicy": true
     },
     {
       "id": 62,
@@ -874,6 +887,7 @@
       "name": "S10 Pan Fried Shrimp (without Shell in Chili Salt)",
       "price": 19.95,
       "category": "Seafood",
+      "spicy": true,
       "image": "/images/menu/67.webp"
     },
     {
@@ -898,7 +912,8 @@
       "code": "O3",
       "name": "O3 Curry Sauce",
       "price": 4,
-      "category": "Sides & Sauces"
+      "category": "Sides & Sauces",
+      "spicy": true
     },
     {
       "id": 112,
@@ -915,6 +930,7 @@
       "name": "O5. House Special Chili Oil 250ml",
       "price": 8.99,
       "category": "Sides & Sauces",
+      "spicy": true,
       "image": "/images/menu/113.webp"
     },
     {
@@ -1088,6 +1104,7 @@
       "name": "T11 Pan Fried Shrimp (without Shell in Chili Salt)",
       "price": 19.95,
       "category": "Traditional Chinese Food & Specialties",
+      "spicy": true,
       "image": "/images/menu/77.webp"
     },
     {
@@ -1106,6 +1123,7 @@
       "name": "T13 Pan Fried Squids (with Chili Salt)",
       "price": 19.95,
       "category": "Traditional Chinese Food & Specialties",
+      "spicy": true,
       "image": "/images/menu/79.webp"
     },
     {

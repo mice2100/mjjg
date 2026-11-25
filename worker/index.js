@@ -23,6 +23,7 @@ const ROUTES = [
   ['GET', '/api/menu', pub.getMenuRoute],
   ['GET', '/api/availability', pub.getAvailability],
   ['GET', '/api/options', pub.getOptions],
+  ['GET', '/api/set-dinners', pub.getSetDinners],
   ['GET', '/api/streets', pub.getStreets],
   ['POST', '/api/quote', pub.postQuote],
   ['POST', '/api/orders', pub.postOrder],

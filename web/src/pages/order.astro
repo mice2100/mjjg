@@ -58,7 +58,9 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
                   <div class="mi-text">
                     {item.code && !item.group && <span class="mi-code">{item.code}</span>}
                     <span class="mi-name">{displayName(item)}</span>
+                    {item.spicy && <span class="mi-hot" title="Spicy: choose your spice level" aria-label="Spicy">🌶️</span>}
                     {item.gf && <span class="mi-gf" title="Gluten free available">GF</span>}
+                    <span class="mi-desc" data-includes={item.id} hidden></span>
                   </div>
                   <span class="mi-price">{formatPrice(item.price)}</span>
                   <button type="button" class="mi-add" data-add={item.id} aria-label={`Add ${displayName(item)}`}>Add</button>
@@ -183,9 +185,11 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   /* No photo yet: quiet brand ring instead of an empty box. */
   .mi-img--none { background: radial-gradient(circle, var(--jade-100) 0 6px, transparent 7px), radial-gradient(circle, transparent 0 13px, var(--jade-100) 14px 17px, transparent 18px), var(--jade-50); }
   .menu-item:first-child { border-top: none; }
-  .mi-text { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+  .mi-text { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; min-width: 0; }
   .mi-code { flex: none; font-size: 12px; font-weight: 800; color: var(--jade-800); background: var(--jade-50); padding: 1px 7px; border-radius: 5px; }
   .mi-name { font-weight: 600; }
+  .mi-hot { flex: none; font-size: 15px; line-height: 1; align-self: center; }
+  .mi-desc { flex-basis: 100%; font-size: 13px; color: var(--muted); line-height: 1.4; }
   .menu-group { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 14px 18px 4px 12px; border-top: 1px solid var(--line); }
   .menu-group:first-child { border-top: none; }
   .mg-name { font-weight: 700; }
@@ -243,6 +247,14 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   .opt-row:has(input:checked) { border-color: var(--jade-600); background: var(--jade-50); }
   .opt-row input { width: 20px; height: 20px; accent-color: var(--jade-800); }
   .opt-name { flex: 1; }
+  .opt-count { display: grid; gap: 8px; }
+  .opt-count-head { display: flex; gap: 10px; align-items: center; }
+  .opt-each { font-size: 13px; color: var(--muted); background: var(--jade-50); border-radius: 999px; padding: 2px 9px; font-weight: 600; }
+  .opt-count-row { display: flex; align-items: center; gap: 14px; }
+  .qty.big { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; gap: 0; }
+  .qty.big button { width: 48px; height: 48px; border: none; border-radius: 0; background: var(--jade-50); font-size: 20px; }
+  .qty.big button:disabled { color: var(--line); cursor: not-allowed; }
+  .qty.big > span { min-width: 48px; font-size: 17px; }
   .opt-price { font-variant-numeric: tabular-nums; color: var(--muted); }
   .opt-form footer { display: flex; gap: 12px; align-items: center; padding: 14px 20px 18px; border-top: 1px solid var(--line); margin-top: 14px; }
   .btn-add { flex: 1; min-height: 48px; border: none; border-radius: 999px; background: var(--jade-800); color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; }

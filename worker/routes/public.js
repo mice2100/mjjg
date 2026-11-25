@@ -7,6 +7,8 @@ import { TIP_CHOICES, buildQuote } from '../services/pricing.js';
 import { createOrder, expireUnpaidOrders, getPublicOrderStatus, reconcileCloverPayments, setCheckoutSession } from '../services/orders.js';
 import { createCheckout, isCloverConfigured } from '../services/clover.js';
 import { listOptionGroups, listSoldOut } from '../services/options.js';
+import { listCombos } from '../services/combos.js';
+import { customerContents } from '../lib/customerNames.js';
 import { PLACES, deliveryPlaceFor } from '../lib/places.js';
 import { getSessionCustomerId } from '../auth/session.js';
 import streets from '../../data/moose_jaw_streets.json' with { type: 'json' };
@@ -28,6 +30,12 @@ export function getConfig(request, env) {
 
 export function getMenuRoute() {
   return json({ success: true, menu: getMenu() }, { headers: { 'Cache-Control': 'public, max-age=300' } });
+}
+
+// What each set dinner contains, as customers read it (no counts, sauces or containers).
+export async function getSetDinners(request, env) {
+  const contents = Object.fromEntries((await listCombos(env.DB)).map((c) => [c.combo_id, customerContents(c.components)]));
+  return json({ success: true, contents }, { headers: { 'Cache-Control': 'public, max-age=300' } });
 }
 
 // Dish options for the website (choices such as chicken balls / sweet & sour pork, extra people).

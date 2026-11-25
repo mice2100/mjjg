@@ -54,7 +54,11 @@ const qtyOf = (id) => state.lines.filter((l) => l.id === id).reduce((a, l) => a 
 // ---- dish options (same groups as the POS; the server checks and prices them) ----
 const groupsFor = (id) => groups.filter((g) => g.item_ids.includes(id));
 // A dish opens the choice window when it has a required choice or an option that costs extra.
-const needsChoice = (id) => groupsFor(id).some((g) => g.min > 0 || g.options.some((o) => o.price_cents > 0));
+// Spicy dishes (chilli icon) open it too, to pick the spice level.
+const needsChoice = (id) => groupsFor(id).some((g) => g.min > 0 || g.id === 'spice' || g.options.some((o) => o.price_cents > 0));
+// "+1 person / +2 people / …" priced n × the first option: shown as a quantity, like the POS.
+const isCounter = (g) => g.min === 0 && g.max === 1 && g.options.length > 1
+  && g.options.every((o, i) => new RegExp(`^\\+${i + 1}\\b`).test(o.name) && o.price_cents === g.options[0].price_cents * (i + 1));
 const modKey = (mods) => mods.map((m) => `${m.g}:${m.n}`).sort().join(',');
 const optionOf = (m) => groups.find((g) => g.id === m.g)?.options.find((o) => o.name === m.n);
 const unitCents = (l) => Math.round(menu.get(l.id).price * 100) + l.mods.reduce((sum, m) => sum + (optionOf(m)?.price_cents || 0), 0);
@@ -88,6 +92,15 @@ function tapAdd(id) {
   else setQty(id, qtyOf(id) + 1);
 }
 
+const counterValue = (g, pick) => g.options.findIndex((o) => pick[g.id].includes(o.name)) + 1;
+function counterHtml(g, pick) {
+  const n = counterValue(g, pick), each = g.options[0].price_cents;
+  return `<div class="opt-count"><div class="opt-count-head"><b>${g.name.replace(/\s*\(.*\)\s*$/, '')}</b><span class="opt-each">${money(each)} each</span></div>
+    <div class="opt-count-row"><span class="qty big"><button type="button" data-cnt="${g.id}" data-d="-1" aria-label="One fewer" ${n ? '' : 'disabled'}>−</button><span>${n}</span>
+      <button type="button" data-cnt="${g.id}" data-d="1" aria-label="One more" ${n < g.options.length ? '' : 'disabled'}>+</button></span>
+      <span class="opt-price">${n ? '+' + money(each * n) : 'None added'}</span></div></div>`;
+}
+
 let choiceDialog = null;
 function openChoice(id) {
   const item = menu.get(id);
@@ -107,7 +120,7 @@ function openChoice(id) {
     const total = unitCents({ id, mods }) * qty;
     d.innerHTML = `<form method="dialog" class="opt-form">
       <header><h3></h3><button type="button" class="opt-x" aria-label="Close">✕</button></header>
-      <div class="opt-groups">${list.map((g) => `<fieldset data-g="${g.id}"><legend>${g.name}${g.min ? ' <span class="opt-req">Required</span>' : ''}<small>${g.max === 1 ? 'Pick one' : 'Pick any'}</small></legend>
+      <div class="opt-groups">${list.map((g) => isCounter(g) ? counterHtml(g, pick) : `<fieldset data-g="${g.id}"><legend>${g.name}${g.min ? ' <span class="opt-req">Required</span>' : ''}<small>${g.max === 1 ? 'Pick one' : 'Pick any'}</small></legend>
         ${g.options.map((o) => `<label class="opt-row"><input type="${g.max === 1 ? 'radio' : 'checkbox'}" name="g-${g.id}" value="${o.name.replace(/"/g, '&quot;')}" ${pick[g.id].includes(o.name) ? 'checked' : ''}>
           <span class="opt-name"></span><span class="opt-price">${o.price_cents ? '+' + money(o.price_cents) : ''}</span></label>`).join('')}</fieldset>`).join('')}</div>
       <footer><span class="qty"><button type="button" data-q="-1" aria-label="One less">−</button><span>${qty}</span><button type="button" data-q="1" aria-label="One more">+</button></span>
@@ -120,6 +133,12 @@ function openChoice(id) {
     d.querySelectorAll('input').forEach((inp) => (inp.onchange = () => {
       const g = list.find((x) => `g-${x.id}` === inp.name);
       pick[g.id] = [...d.querySelectorAll(`input[name="g-${g.id}"]:checked`)].map((x) => x.value).slice(0, g.max);
+      draw();
+    }));
+    d.querySelectorAll('[data-cnt]').forEach((b) => (b.onclick = () => {
+      const g = list.find((x) => x.id === b.dataset.cnt);
+      const n = Math.max(0, Math.min(g.options.length, counterValue(g, pick) + Number(b.dataset.d)));
+      pick[g.id] = n ? [g.options[n - 1].name] : [];
       draw();
     }));
     d.querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { qty = Math.max(1, Math.min(50, qty + Number(b.dataset.q))); draw(); }));
@@ -656,6 +675,18 @@ export function initOrderPage() {
 
   $$('[data-add]').forEach((b) => (b.onclick = () => tapAdd(Number(b.dataset.add))));
   // Dish options (chicken balls or sweet & sour pork, extra people, …). Until they load, dishes add plainly.
+  // Set dinners: what they contain, in plain names.
+  fetch('/api/set-dinners')
+    .then((r) => r.json())
+    .then((data) => {
+      for (const el of $$('[data-includes]')) {
+        const list = data.contents?.[el.dataset.includes];
+        if (!list?.length) continue;
+        el.textContent = list.join(' · ');
+        el.hidden = false;
+      }
+    })
+    .catch(() => {});
   fetch('/api/options')
     .then((r) => r.json())
     .then((data) => {
