@@ -141,11 +141,43 @@ function viewRegister() {
 const TILE_ORDER = [88, 89, 97, 98, 95, 99, 94, 96, 92, 91, 93, 90];
 const tileRank = (i) => { const r = TILE_ORDER.indexOf(i.id); return r < 0 ? 1000 + S.menu.indexOf(i) : r; };
 
+// A dish sold in several choices (menu.json "group"): each choice is its own dish and price.
+const choicesOf = (group) => S.menu.filter((m) => m.group === group);
+function groupTile(group) {
+  const list = choicesOf(group), first = list[0], prices = list.map((m) => m.price);
+  const allOut = list.every((m) => S.sold.has(m.id)), lo = Math.min(...prices), hi = Math.max(...prices);
+  return `<button class="tile ${allOut ? 'out' : ''}" data-act="choices" data-g="${esc(group)}" ${allOut ? 'disabled aria-disabled="true"' : ''}>
+      ${first.code ? `<span class="tcode">${esc(first.code)}</span>` : ''}
+      ${list.some((m) => isGf(m.id)) ? '<span class="gfmark" title="Gluten free available" aria-label="Gluten free available">GF</span>' : ''}
+      <span class="tname"><b class="dn-short">${esc(shortName(group))}</b><span class="dn-full">${list.map((m) => esc(m.choice)).join(' · ')}</span></span>
+      <span class="tmeta"><span>${lo === hi ? $m(lo) : `from ${$m(lo)}`}</span>
+        <span class="tflags">${allOut ? '<span class="pill danger">Sold out</span>' : '<span class="pill">Choose</span>'}</span></span>
+    </button>`;
+}
+function choicesModal() {
+  const list = choicesOf(U.choices), first = list[0];
+  const rows = list.map((m) => {
+    const out = S.sold.has(m.id);
+    return `<button type="button" class="choice ${out ? 'out' : ''}" data-act="pickChoice" data-id="${m.id}" ${out ? 'disabled' : ''}>
+      <span><b>${esc(m.choice)}</b>${m.short ? `<small>${esc(m.short)}</small>` : ''}</span>
+      <span class="num">${out ? 'Sold out' : $m(m.price)}</span></button>`;
+  }).join('');
+  return sheet(`${first.code ? `<span class="tcode" style="font-size:16px">${esc(first.code)}</span> ` : ''}${esc(shortName(U.choices))}`,
+    'With one choice of', `<div class="choices">${rows}</div>`, '<button class="btn" data-act="close">Cancel</button>');
+}
+
 function itemsHtml() {
   const list = U.q && S.search ? S.search.searchMenu(S.menu, U.q).slice(0, 60).map((r) => r.item)
     : S.menu.filter((i) => i.category === U.cat).sort((a, b) => tileRank(a) - tileRank(b));
   if (!list.length) return `<div class="empty">${U.q ? 'No dish matches “' + esc(U.q) + '”.' : 'No dishes.'}</div>`;
+  // N1 / N2 / N3 noodles: one card per dish "with one choice of"; a search still finds each choice.
+  const shown = new Set();
   return list.map((i) => {
+    if (i.group && !U.q) {
+      if (shown.has(i.group)) return '';
+      shown.add(i.group);
+      return groupTile(i.group);
+    }
     const out = S.sold.has(i.id);
     // Set dinners: what is in them, one per line, in the order the kitchen lists them.
     const combo = (S.combos.get(i.id) || []).map((c) => `<span>${c.qty > 1 ? c.qty + '× ' : ''}${esc(shortName(c.name))}</span>`).join('');

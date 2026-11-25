@@ -267,15 +267,198 @@
       "short": "SP CM",
       "code": "N1",
       "name": "N1 House Special Chow Mein (Crispy)",
+      "group": "N1 Chow Mein (Crispy)",
+      "choice": "House Special",
       "price": 16.95,
       "category": "Noodles & Chow Mein",
       "image": "/images/menu/52.webp"
     },
     {
+      "id": 101,
+      "short": "CK CM",
+      "code": "N1",
+      "name": "N1 Chicken Chow Mein (Crispy)",
+      "group": "N1 Chow Mein (Crispy)",
+      "choice": "Chicken",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/101.webp"
+    },
+    {
+      "id": 103,
+      "short": "BF CM",
+      "code": "N1",
+      "name": "N1 Beef Chow Mein (Crispy)",
+      "group": "N1 Chow Mein (Crispy)",
+      "choice": "Beef",
+      "price": 16.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 102,
+      "short": "SHR CM",
+      "code": "N1",
+      "name": "N1 Shrimp Chow Mein (Crispy)",
+      "group": "N1 Chow Mein (Crispy)",
+      "choice": "Shrimp",
+      "price": 16.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 120,
+      "short": "BBQ CM",
+      "code": "N1",
+      "name": "N1 BBQ Pork Chow Mein (Crispy)",
+      "group": "N1 Chow Mein (Crispy)",
+      "choice": "BBQ Pork",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 104,
+      "short": "SP LM",
+      "code": "N2",
+      "name": "N2 House Special Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "House Special",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 105,
+      "short": "CK LM",
+      "code": "N2",
+      "name": "N2 Chicken Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "Chicken",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/105.webp"
+    },
+    {
+      "id": 106,
+      "short": "BF LM",
+      "code": "N2",
+      "name": "N2 Beef Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "Beef",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/106.webp"
+    },
+    {
+      "id": 121,
+      "short": "SHR LM",
+      "code": "N2",
+      "name": "N2 Shrimp Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "Shrimp",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 122,
+      "short": "BBQ LM",
+      "code": "N2",
+      "name": "N2 BBQ Pork Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "BBQ Pork",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 123,
+      "short": "BUFFET LM",
+      "code": "N2",
+      "name": "N2 Buffet Low Mein",
+      "group": "N2 Low Mein",
+      "choice": "Buffet Low Mein",
+      "price": 11.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 124,
+      "short": "SP SH",
+      "code": "N3",
+      "name": "N3 House Special Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "House Special",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 125,
+      "short": "CK SH",
+      "code": "N3",
+      "name": "N3 Chicken Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "Chicken",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 126,
+      "short": "BF SH",
+      "code": "N3",
+      "name": "N3 Beef Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "Beef",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 127,
+      "short": "SHR SH",
+      "code": "N3",
+      "name": "N3 Shrimp Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "Shrimp",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 128,
+      "short": "BBQ SH",
+      "code": "N3",
+      "name": "N3 BBQ Pork Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "BBQ Pork",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 129,
+      "short": "BUFFET SH",
+      "code": "N3",
+      "name": "N3 Buffet Shanghai Noodles",
+      "group": "N3 Shanghai Noodles",
+      "choice": "Buffet Shanghai Noodles",
+      "price": 11.95,
+      "category": "Noodles & Chow Mein"
+    },
+    {
+      "id": 100,
+      "short": "BF FLAT RN",
+      "code": "N4",
+      "name": "N4 Beef Flat Rice Noodles",
+      "price": 19.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/100.webp"
+    },
+    {
+      "id": 107,
+      "short": "SING FRN",
+      "code": "N5",
+      "name": "N5 Singapore Fried Rice Noodles (Hot)",
+      "price": 16.95,
+      "category": "Noodles & Chow Mein",
+      "image": "/images/menu/107.webp"
+    },
+    {
       "id": 53,
       "short": "SP FRN",
-      "code": "N10",
-      "name": "N10 Special Fried Rice Noodles",
+      "code": "N6",
+      "name": "N6 Special Fried Rice Noodles",
       "price": 16.95,
       "category": "Noodles & Chow Mein",
       "gf": true
@@ -283,85 +466,16 @@
     {
       "id": 54,
       "short": "SSS LM",
-      "code": "N11",
-      "name": "N11 Supreme Soy Sauce & Green Onions Low Mein",
+      "code": "N7",
+      "name": "N7 Scallion Supreme Soy Sauce Low Mein",
       "price": 11.95,
       "category": "Noodles & Chow Mein"
     },
     {
-      "id": 100,
-      "short": "BF FLAT RN",
-      "code": "N2",
-      "name": "N2 Beef Flat Rice Noodles",
-      "price": 19.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/100.webp"
-    },
-    {
-      "id": 101,
-      "short": "CK CM",
-      "code": "N3",
-      "name": "N3. Chicken Chow Mein (Crispy)",
-      "price": 15.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/101.webp"
-    },
-    {
-      "id": 102,
-      "short": "SHR CM",
-      "code": "N4",
-      "name": "N4 Shrimp Chow Mein",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 103,
-      "short": "BF CM",
-      "code": "N5",
-      "name": "N5 Beef Chow Mein",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 104,
-      "short": "SP LM / SP SH",
-      "code": "N6",
-      "name": "N6 House Special Low Mien or Shanghai Noodles",
-      "price": 15.95,
-      "category": "Noodles & Chow Mein"
-    },
-    {
-      "id": 105,
-      "short": "CK LM / CK SH",
-      "code": "N7",
-      "name": "N7 Chicken Low Mein or Shanghai Noodel",
-      "price": 14.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/105.webp"
-    },
-    {
-      "id": 106,
-      "short": "BF LM / BF SH",
-      "code": "N8",
-      "name": "N8 Beef Low Mein or Shanghai Noodle",
-      "price": 14.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/106.webp"
-    },
-    {
-      "id": 107,
-      "short": "SING FRN",
-      "code": "N9",
-      "name": "N9 Singapore Fried Rice Noodle",
-      "price": 16.95,
-      "category": "Noodles & Chow Mein",
-      "image": "/images/menu/107.webp"
-    },
-    {
       "id": 108,
       "short": "Spicy Egg FRN",
-      "code": "N12",
-      "name": "N12 Spicy Egg Fried Rice Noodles",
+      "code": "N8",
+      "name": "N8 Spicy Egg Fried Rice Noodles",
       "price": 15.95,
       "category": "Noodles & Chow Mein"
     },
@@ -763,7 +877,7 @@
     },
     {
       "id": 109,
-      "short": "S/S",
+      "short": "S/S sauce",
       "code": "O1",
       "name": "O1 Sweet & Sour Sauce",
       "price": 2.5,
@@ -779,7 +893,7 @@
     },
     {
       "id": 111,
-      "short": "CURRY",
+      "short": "CURRY sauce",
       "code": "O3",
       "name": "O3 Curry Sauce",
       "price": 4,
@@ -787,7 +901,7 @@
     },
     {
       "id": 112,
-      "short": "HONEY GARLIC SAUCE",
+      "short": "HONEY GARLIC sauce",
       "code": "O4",
       "name": "O4 Honey Garlic Sauce",
       "price": 4,

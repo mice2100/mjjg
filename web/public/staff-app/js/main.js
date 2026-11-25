@@ -43,14 +43,14 @@ function renderModal() {
   const same = el.dataset.modal === U.modal, top = same ? [...el.querySelectorAll('.sbody')].map((b) => b.scrollTop) : [];
   el.dataset.modal = U.modal;
   el.hidden = false;
-  el.innerHTML = { item: itemModal, od: odModal, start: startModal, seat: seatModal, view: viewModal, pay: payModal, receipt: receiptModal, group: groupModal, combo: comboModal }[U.modal]();
+  el.innerHTML = { item: itemModal, od: odModal, start: startModal, seat: seatModal, view: viewModal, pay: payModal, receipt: receiptModal, group: groupModal, combo: comboModal, choices: choicesModal }[U.modal]();
   if (U.modal === 'start') drawAc();
   el.querySelectorAll('.sbody').forEach((b, i) => { if (top[i]) b.scrollTop = top[i]; });
   restoreFocus(focus);
 }
 
 function closeModal() {
-  U.modal = null; U.mod = null; U.od = null; U.start = null; U.pay = null; U.ge = null; U.ce = null; U.confirmCancel = null;
+  U.modal = null; U.mod = null; U.od = null; U.start = null; U.pay = null; U.ge = null; U.ce = null; U.choices = null; U.confirmCancel = null;
   renderModal();
 }
 
@@ -81,6 +81,8 @@ const A = {
   cat: ({ c }) => { U.cat = c; U.q = ''; render(); const it = $('items'); if (it) it.scrollTop = 0; },
   clearQ: () => { U.q = ''; render(); },
   item: ({ id }) => tapItem(id),
+  choices: ({ g }) => { U.choices = g; U.modal = 'choices'; renderModal(); },
+  pickChoice: ({ id }) => { closeModal(); tapItem(id); },
   type: ({ t }) => {
     const d = U.draft;
     d.type = t;

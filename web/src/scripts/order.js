@@ -400,7 +400,7 @@ function setUpSearch() {
   const input = $('[data-search]');
   const items = [...menu.values()];
   const rows = new Map($$('[data-item]').map((li) => [Number(li.dataset.item), li]));
-  const original = new Map($$('[data-cat]').map((cat) => [cat, $$('[data-item]', cat)]));
+  const original = new Map($$('[data-cat]').map((cat) => [cat, $$('[data-item], [data-group-head]', cat)])); // headings stay in place
 
   input.addEventListener('input', () => {
     const q = input.value.trim();
@@ -421,6 +421,7 @@ function setUpSearch() {
       const list = $('.menu-list', cat);
       const ordered = q ? [...lis].sort((a, b) => (rank.get(+a.dataset.item) ?? 1e9) - (rank.get(+b.dataset.item) ?? 1e9)) : lis;
       list.append(...ordered);
+      lis.forEach((li) => { if (li.dataset.groupHead !== undefined) li.hidden = Boolean(q); });
       const best = Math.min(...lis.map((li) => rank.get(+li.dataset.item) ?? 1e9));
       cat.hidden = best === 1e9;
       cat.style.order = q && !cat.hidden ? String(best) : '';

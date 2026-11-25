@@ -540,3 +540,11 @@ body.osk-open .fanwrap{display:none}
 /* set-dinner contents: one item per line */
 .tdesc.tlist{display:flex;flex-direction:column;gap:1px}
 .inclist{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+
+/* N1 / N2 / N3 noodles: pick the choice (each has its own price) */
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:14px 16px;min-height:58px;text-align:left;font-size:17px}
+.choice small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.choice .num{font-weight:700}
+.choice:active:not(:disabled){background:var(--sunk)}
+.choice.out{opacity:.55}

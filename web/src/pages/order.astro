@@ -10,6 +10,8 @@ const categories = [...new Set(MENU.map((m) => m.category))].map((name, i) => ({
   slug: `cat-${i}`,
   items: MENU.filter((m) => m.category === name),
 }));
+// N1 / N2 / N3 noodles: a heading "with one choice of", then each choice with its own price.
+const firstOfGroup = (item, items) => item.group && items.find((m) => m.group === item.group) === item;
 const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayName(m), price: m.price, category: m.category }));
 ---
 <Base title="Order Online" description={`Order Chinese food online from ${SITE.name} in Moose Jaw for pickup or delivery.`}>
@@ -41,20 +43,27 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
           <section class="menu-cat" id={c.slug} data-cat>
             <h2>{c.name}</h2>
             <ul class="menu-list">
-              {c.items.map((item) => (
-                <li class="menu-item" data-item={item.id}>
+              {c.items.map((item) => (<>
+                {firstOfGroup(item, c.items) && (
+                  <li class="menu-group" data-group-head>
+                    <span class="mi-code">{item.code}</span>
+                    <span class="mg-name">{displayName({ name: item.group })}</span>
+                    <span class="mg-sub">with one choice of</span>
+                  </li>
+                )}
+                <li class:list={['menu-item', item.group && 'is-choice']} data-item={item.id}>
                   {item.image
                     ? <img class="mi-img" src={item.image.replace('.webp', '-sm.webp')} alt="" loading="lazy" width="72" height="72" />
                     : <span class="mi-img mi-img--none" aria-hidden="true"></span>}
                   <div class="mi-text">
-                    {item.code && <span class="mi-code">{item.code}</span>}
+                    {item.code && !item.group && <span class="mi-code">{item.code}</span>}
                     <span class="mi-name">{displayName(item)}</span>
                     {item.gf && <span class="mi-gf" title="Gluten free available">GF</span>}
                   </div>
                   <span class="mi-price">{formatPrice(item.price)}</span>
                   <button type="button" class="mi-add" data-add={item.id} aria-label={`Add ${displayName(item)}`}>Add</button>
                 </li>
-              ))}
+              </>))}
             </ul>
           </section>
         ))}
@@ -177,6 +186,12 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   .mi-text { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
   .mi-code { flex: none; font-size: 12px; font-weight: 800; color: var(--jade-800); background: var(--jade-50); padding: 1px 7px; border-radius: 5px; }
   .mi-name { font-weight: 600; }
+  .menu-group { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; padding: 14px 18px 4px 12px; border-top: 1px solid var(--line); }
+  .menu-group:first-child { border-top: none; }
+  .mg-name { font-weight: 700; }
+  .mg-sub { font-size: 13px; color: var(--muted); }
+  .menu-item.is-choice { border-top: 1px dashed var(--line); padding-left: 28px; }
+  .menu-group + .menu-item.is-choice { border-top: none; }
   .mi-gf { flex: none; align-self: center; font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #2F6B43; background: #E3F1E7; border: 1px solid #9CC7A9; padding: 1px 6px; border-radius: 999px; }
   .mi-price { font-weight: 700; font-variant-numeric: tabular-nums; }
   .mi-add { min-height: 40px; min-width: 64px; border-radius: 999px; border: 1.5px solid var(--jade-600); background: var(--paper); color: var(--jade-800); font-weight: 700; cursor: pointer; }
