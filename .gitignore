@@ -26,3 +26,7 @@ assets/old-site-webp/
 .deploy.env
 .prod.vars
 backups/
+
+# The restaurant's own new-order ringtone (11 MB, not ours to publish on GitHub). Deployed from this machine.
+web/public/staff/ringtone.mp3
+web/public/assets/staff/ringtone.mp3

@@ -7,7 +7,7 @@
 Jade Garden 餐厅(471 Main St N, Moose Jaw, SK)整套系统运行在 **一个 Cloudflare Worker + 一个 D1 数据库** 上:
 
 - **顾客网站**(`/`、`/order/`、`/gallery/`、`/privacy/`):Astro 静态站,支持自取/外送在线点餐、优惠券,可选 Google/Apple/Facebook 登录。
-- **员工端**(`/staff/pos/`、`/staff/kitchen/`):iPad 电话点餐 POS + 带提示音的厨房订单看板,由 Cloudflare Access 保护。
+- **员工端**(`/staff/`;`/staff/pos/` 打开点餐,`/staff/kitchen/` 打开厨房):iPad POS(电话、到店、堂食桌位)、收银(现金/刷卡、分单、小票)、带提示音的厨房出单屏、菜单设置(菜品选项、售罄、套餐内容),由 Cloudflare Access 保护。旧版界面保留在 `/staff/classic/`。
 - **API**(`/api/*`):服务端定价、订单、顾客、优惠券、支付回调。
 - **在线支付**:Clover Hosted Checkout(顾客在 Clover 的页面付款,卡号不经过我们的代码)。
 - **WooCommerce 导入**(临时):在切换前,把旧 WordPress 站的订单同步进厨房看板。
@@ -21,6 +21,7 @@ Jade Garden 餐厅(471 Main St N, Moose Jaw, SK)整套系统运行在 **一个 C
 | 项目 | 状态 |
 |---|---|
 | 网站、点餐、POS、厨房看板、优惠券 | 已完成,本地测试通过(`npm test` 及端到端冒烟测试) |
+| 新版员工端(堂食桌位、收银分单、菜品选项、售罄) | 2026-11 完成,本地测试通过;**尚未部署**。部署时会执行迁移 `0005` |
 | 测试部署 | 之前部署在前任开发者的 Cloudflare 账号下(`jg.moosephotoprint.com` 和一个 `workers.dev` 地址) |
 | Clover 支付 | **仅沙盒。** 之前的密钥被拒绝(见 §8)。在配置真实 Clover 密钥之前,生产环境会拒绝网上订单 |
 | 顾客登录(Google/Apple/Facebook) | 未配置,目前只支持访客结账 |
@@ -184,6 +185,10 @@ npx wrangler d1 execute jadegarden-db --remote --command "INSERT INTO coupons (.
 **已付款网上订单退款:** 在 Clover 后台手动退款。厨房里点“取消”**不会**退款。
 
 **添加员工:** 在 Zero Trust 的 Access 策略里加上他的邮箱。
+
+**售罄 / 恢复供应:** 员工端 → Menu → 点菜品旁的 Available / Sold out。网站会同时停止售卖该菜品,无需部署。
+
+**菜品选项(辣度、要求等):** 员工端 → Menu → Item options。只有 `ADMIN_EMAILS` 里的邮箱可以修改(留空 = 所有员工)。
 
 ---
 

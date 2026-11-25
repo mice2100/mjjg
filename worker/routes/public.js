@@ -2,10 +2,12 @@
 
 import { HttpError, isDev, json, readJson } from '../lib/http.js';
 import { getMenu } from '../lib/menu.js';
-import { DELIVERY_FEE_CENTS, TAX_RATE_PERCENT, normalizeEmail, normalizePhone } from '../lib/util.js';
+import { DELIVERY_FEES_CENTS, TAX_RATE_PERCENT, normalizeEmail, normalizePhone } from '../lib/util.js';
 import { TIP_CHOICES, buildQuote } from '../services/pricing.js';
 import { createOrder, expireUnpaidOrders, getPublicOrderStatus, reconcileCloverPayments, setCheckoutSession } from '../services/orders.js';
 import { createCheckout, isCloverConfigured } from '../services/clover.js';
+import { listSoldOut } from '../services/options.js';
+import { PLACES, deliveryPlaceFor } from '../lib/places.js';
 import { getSessionCustomerId } from '../auth/session.js';
 import streets from '../../data/moose_jaw_streets.json' with { type: 'json' };
 import hotelData from '../../data/moose_jaw_hotels.json' with { type: 'json' };
@@ -17,7 +19,7 @@ export function getConfig(request, env) {
     apple_services_id: env.APPLE_SERVICES_ID || '',
     facebook_app_id: env.FACEBOOK_APP_ID || '',
     turnstile_site_key: env.TURNSTILE_SITE_KEY || '',
-    delivery_fee_cents: DELIVERY_FEE_CENTS,
+    delivery_fees_cents: DELIVERY_FEES_CENTS, // {house, apartment}
     tax_rate_percent: TAX_RATE_PERCENT,
     tip_choices: TIP_CHOICES,
     online_payment: isCloverConfigured(env),
@@ -28,8 +30,13 @@ export function getMenuRoute() {
   return json({ success: true, menu: getMenu() }, { headers: { 'Cache-Control': 'public, max-age=300' } });
 }
 
+// Dishes staff marked sold out (the website greys them out). Short cache: staff flip these during service.
+export async function getAvailability(request, env) {
+  return json({ success: true, sold_out: await listSoldOut(env.DB) }, { headers: { 'Cache-Control': 'public, max-age=30' } });
+}
+
 export function getStreets() {
-  return json({ success: true, streets, hotels: hotelData.hotels }, { headers: { 'Cache-Control': 'public, max-age=3600' } });
+  return json({ success: true, streets, hotels: hotelData.hotels, apartment_buildings: PLACES.buildings }, { headers: { 'Cache-Control': 'public, max-age=3600' } });
 }
 
 // Cart preview: same calculation as the real order, but coupon problems are reported
@@ -40,6 +47,7 @@ export async function postQuote(request, env) {
   const quote = await buildQuote(env.DB, {
     items: body.items,
     deliveryType: body.delivery_type,
+    deliveryPlace: deliveryPlaceFor(body.delivery_address), // from the address, never the browser's choice
     couponCode: body.coupon_code,
     source: 'Web',
     email: normalizeEmail(body.customer_email),

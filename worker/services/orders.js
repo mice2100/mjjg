@@ -1,8 +1,9 @@
 // Order creation (website + staff POS) and the staff-facing order shape.
 
 import { HttpError } from '../lib/http.js';
-import { cleanText, formatLocalDate, formatLocalTime, normalizeEmail, normalizePhone, nowIso, randomId, toDollars } from '../lib/util.js';
+import { placeOfFee, cleanText, formatLocalDate, formatLocalTime, normalizeEmail, normalizePhone, nowIso, randomId, toDollars } from '../lib/util.js';
 import { buildQuote } from './pricing.js';
+import { assertUnit, deliveryPlaceFor } from '../lib/places.js';
 import { afterOrderChange, prepareCustomerForOrder } from './customers.js';
 import { findPaidOrders, isCloverConfigured } from './clover.js';
 import { loadComboMap, withComponents } from './combos.js';
@@ -39,6 +40,7 @@ export async function createOrder(db, input, ctx) {
     throw new HttpError(400, 'Please choose pickup or delivery.');
   }
   if (deliveryType === 'delivery' && !address) throw new HttpError(400, 'Please enter a delivery address.');
+  assertUnit(deliveryType, deliveryPlaceFor(address), address);
 
   const payOnline = Boolean(ctx.payOnline);
   // A customer who left the Clover page and checks out again: drop their earlier unpaid
@@ -50,6 +52,7 @@ export async function createOrder(db, input, ctx) {
   const quote = await buildQuote(db, {
     items: input.items,
     deliveryType,
+    deliveryPlace: deliveryPlaceFor(address), // house or apartment / hotel, from the address
     couponCode: input.coupon_code,
     source,
     email,
@@ -233,8 +236,17 @@ export async function getPublicOrderStatus(db, id, token) {
   };
 }
 
+const parseJson = (text, fallback) => {
+  try {
+    return JSON.parse(text) ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 // Shape consumed by the staff app (web/public/staff/index.html). Dollars, not cents.
-export function toStaffOrder(row) {
+// payments: rows of order_payments for this order (in-store cash / card), oldest first.
+export function toStaffOrder(row, payments = []) {
   let items = [];
   try {
     items = JSON.parse(row.items_json);
@@ -252,23 +264,46 @@ export function toStaffOrder(row) {
     delivery_address: row.delivery_address || '',
     delivery_time_slot: row.delivery_time_slot || '',
     customer_notes: row.customer_notes || '',
-    items: items.map((it) => ({
+    items: items.map((it, i) => ({
       id: it.id ?? null, // menu id; null for WooCommerce imports
       code: it.code || '',
       name: it.free ? `${it.name} (FREE)` : it.name,
-      price: toDollars(it.price_cents),
+      price: toDollars(it.price_cents), // per unit, options included
       qty: it.qty,
       free: Boolean(it.free),
       components: (it.components || []).map((c) => ({ name: c.name, qty: c.qty })),
+      // POS lines (migration 0005); older orders get defaults.
+      uid: it.uid || `L${i}`,
+      sent: it.sent ?? it.qty,
+      mods: (it.mods || []).map((m) => ({ g: m.g, group: m.group, n: m.n, price: toDollars(m.price_cents) })),
+      note: it.note || '',
+      disc: it.disc || null,
+      disc_amount: toDollars(it.disc_cents),
     })),
     subtotal: toDollars(row.subtotal_cents),
     discount: toDollars(row.discount_cents),
     coupon_code: row.coupon_code || '',
     delivery_fee: toDollars(row.delivery_fee_cents),
+    delivery_place: row.delivery_type === 'delivery' ? placeOfFee(row.delivery_fee_cents) : null,
     tip: toDollars(row.tip_cents),
     payment_status: row.payment_status || 'in_store',
     tax: toDollars(row.tax_cents),
     total: toDollars(row.total_cents),
+    table_id: row.table_id || null,
+    guests: row.guests || null,
+    order_discount: parseJson(row.staff_discount_json, null),
+    pending_voids: parseJson(row.pending_voids_json, []),
+    // Kitchen tickets exist only for POS orders made by the new staff app (lines with uid).
+    ticketed: items.some((it) => it.uid),
+    payments: payments.map((p) => ({
+      id: p.id, method: p.method, amount: toDollars(p.amount_cents), label: p.label || '',
+      tendered: p.tendered_cents == null ? null : toDollars(p.tendered_cents),
+      change: p.change_cents == null ? null : toDollars(p.change_cents), at: p.created_at,
+    })),
+    paid: row.payment_status === 'paid' ? toDollars(row.total_cents) : toDollars(payments.reduce((s, p) => s + p.amount_cents, 0)),
+    balance: row.payment_status === 'paid' ? 0 : toDollars(row.total_cents - payments.reduce((s, p) => s + p.amount_cents, 0)),
+    closed_at: row.closed_at || null,
+    received_at: row.received_at || null, // online orders: staff tapped "Received" (stops the ringtone)
     created_at: row.created_at,
     updated_at: row.updated_at,
     time: formatLocalTime(row.created_at),
@@ -290,7 +325,19 @@ export async function listStaffOrders(db) {
     )
     .bind(since)
     .all();
-  return results.map(toStaffOrder);
+  return withPayments(db, results);
+}
+
+/** toStaffOrder for many rows, with their in-store payments (one query). */
+export async function withPayments(db, rows) {
+  if (!rows.length) return [];
+  const { results } = await db
+    .prepare('SELECT * FROM order_payments WHERE order_id IN (SELECT value FROM json_each(?)) ORDER BY id')
+    .bind(JSON.stringify(rows.map((r) => r.id)))
+    .all();
+  const byOrder = new Map();
+  for (const p of results) (byOrder.get(p.order_id) || byOrder.set(p.order_id, []).get(p.order_id)).push(p);
+  return rows.map((r) => toStaffOrder(r, byOrder.get(r.id) || []));
 }
 
 /**
@@ -306,17 +353,48 @@ export async function listStaffOrderChanges(db, since) {
     )
     .bind(new Date(since).toISOString())
     .all();
-  return results.map(toStaffOrder);
+  return withPayments(db, results);
 }
+
+// Staff acknowledged a new online order (stops the ringtone on every screen).
+export async function markReceived(db, id) {
+  const at = nowIso();
+  const row = await db
+    .prepare('UPDATE orders SET received_at = COALESCE(received_at, ?), updated_at = ? WHERE id = ? RETURNING *')
+    .bind(at, at, id)
+    .first();
+  if (!row) throw new HttpError(404, 'Order not found');
+  return (await withPayments(db, [row]))[0];
+}
+
+export const closeTicketsStatement = (db, orderId, at) =>
+  db.prepare('UPDATE kitchen_tickets SET done_at = ?, updated_at = ? WHERE order_id = ? AND done_at IS NULL').bind(at, at, orderId);
 
 export async function setOrderStatus(db, id, status) {
   if (!['pending', 'completed', 'cancelled'].includes(status)) throw new HttpError(400, 'Invalid status');
+  const at = nowIso();
+  if (status === 'pending') {
+    // Reopening a dine-in check must not seat two checks at one table.
+    const cur = await db.prepare('SELECT table_id FROM orders WHERE id = ?').bind(id).first();
+    if (cur?.table_id) {
+      const busy = await db
+        .prepare("SELECT id FROM orders WHERE status = 'pending' AND table_id = ? AND id != ? LIMIT 1")
+        .bind(cur.table_id, id)
+        .first();
+      if (busy) throw new HttpError(409, `Table ${cur.table_id} already has an open check (${busy.id}).`);
+    }
+  }
   const row = await db
-    .prepare('UPDATE orders SET status = ?, updated_at = ? WHERE id = ? RETURNING *')
-    .bind(status, nowIso(), id)
+    .prepare(
+      `UPDATE orders SET status = ?, updated_at = ?, closed_at = CASE WHEN ? = 'pending' THEN NULL ELSE ? END
+       WHERE id = ? RETURNING *`
+    )
+    .bind(status, at, status, at, id)
     .first();
   if (!row) throw new HttpError(404, 'Order not found');
   const stmts = afterOrderChange(db, row); // a cancellation leaves the customer's stats
+  // A closed or cancelled order has left the kitchen: clear its open tickets.
+  if (status !== 'pending') stmts.push(closeTicketsStatement(db, id, at));
   if (stmts.length) await db.batch(stmts);
-  return toStaffOrder(row);
+  return (await withPayments(db, [row]))[0];
 }

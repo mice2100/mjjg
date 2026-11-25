@@ -1,0 +1,232 @@
+{
+  "_about": "Apartment, condo, townhouse, seniors and housing-authority buildings, and trailer courts in Moose Jaw. Delivery here costs the apartment fee ($8) and needs a unit / suite / apt number (lot number for trailer courts). The POS and the order page suggest these by name or by street address. Sources: the owner's list (2026-11-25), moosejawhousingauthority.com/properties/ (all 15 properties), rental and directory sites. Owner to confirm. Not found yet: Casa Canada, Woodlily Garden apartment, the address of Trans Canada Trailer Court. Fields: name, address, also (other street addresses of the same complex), names (other spellings), type ('Trailer court'; default apartment).",
+  "buildings": [
+    {
+      "name": "Athabasca Tower",
+      "address": "610 2nd Ave NE"
+    },
+    {
+      "name": "Park Ave 2nd",
+      "address": "615 2nd Ave NE"
+    },
+    {
+      "name": "Blue Sage Townhouses",
+      "address": "47 Arrowhead Rd",
+      "also": [
+        "1 Arrowhead Rd"
+      ]
+    },
+    {
+      "name": "Discovery Place",
+      "address": "51 Wood Lily Dr"
+    },
+    {
+      "name": "Forest Gardens (Avenue Living)",
+      "address": "35 Wood Lily Dr"
+    },
+    {
+      "name": "Woodlily Court (Avenue Living)",
+      "address": "23 Wood Lily Dr",
+      "also": [
+        "31 Wood Lily Dr"
+      ]
+    },
+    {
+      "name": "Gencore Properties Maplewood",
+      "address": "945 Maplewood Dr"
+    },
+    {
+      "name": "Gordon Manor Apartments",
+      "address": "1350 Gordon Rd"
+    },
+    {
+      "name": "Greensway Condominiums",
+      "address": "550 Laurier St W"
+    },
+    {
+      "name": "Lynbrook Townhouses",
+      "address": "660 Laurier St W",
+      "also": [
+        "602 Laurier St W"
+      ]
+    },
+    {
+      "name": "High Park Towers",
+      "address": "220 High St E"
+    },
+    {
+      "name": "Langdon Towers",
+      "address": "450 Langdon Cres"
+    },
+    {
+      "name": "Ridge Apartments",
+      "address": "910 Westpark Dr",
+      "also": [
+        "1060 Manhattan Dr"
+      ]
+    },
+    {
+      "name": "Westpark Apartments",
+      "address": "910 Westpark Dr"
+    },
+    {
+      "name": "Slade Apartments",
+      "address": "423 1st Ave NW"
+    },
+    {
+      "name": "Southridge Park Apartments",
+      "address": "1300 12th Ave SW"
+    },
+    {
+      "name": "Southside Apartments",
+      "address": "105 Lillooet St W"
+    },
+    {
+      "name": "Crestview Housing Co-op",
+      "address": "1325 Wolfe Ave"
+    },
+    {
+      "name": "Prairie Meadows",
+      "address": "1250 11th Ave SW"
+    },
+    {
+      "name": "Regal Villa",
+      "address": "1245 13th Ave NW"
+    },
+    {
+      "name": "Aspira West Park Crossing",
+      "address": "1801 Meier Dr"
+    },
+    {
+      "name": "Points West Living",
+      "address": "917 Bradley St"
+    },
+    {
+      "name": "Caleb Village",
+      "address": "917 Bradley St"
+    },
+    {
+      "name": "Mulberry Estates",
+      "address": "220 Mulberry Ln"
+    },
+    {
+      "name": "The Bentley (Venvi)",
+      "address": "425 4th Ave NW"
+    },
+    {
+      "name": "Crescent Park Retirement Villa",
+      "address": "134 Athabasca St E"
+    },
+    {
+      "name": "Providence Place",
+      "address": "100 2nd Ave NE"
+    },
+    {
+      "name": "Silverwood Estates Housing Co-op",
+      "address": "14 Nettle Pl"
+    },
+    {
+      "name": "655 Fairford St E",
+      "address": "655 Fairford St E"
+    },
+    {
+      "name": "856 Keith St SW",
+      "address": "856 Keith St SW"
+    },
+    {
+      "name": "217 High St E",
+      "address": "217 High St E"
+    },
+    {
+      "name": "Heritage Place",
+      "address": "245 River St E"
+    },
+    {
+      "name": "Temple Towers",
+      "address": "750 1st Ave NE"
+    },
+    {
+      "name": "Victoria Towers",
+      "address": "123 Fairford St E"
+    },
+    {
+      "name": "Chester Road (Housing Authority)",
+      "address": "821 Chester Rd",
+      "also": [
+        "831 Chester Rd",
+        "841 Chester Rd"
+      ]
+    },
+    {
+      "name": "River's Edge Apartments",
+      "address": "52 Maple St E"
+    },
+    {
+      "name": "Coteau Street Complex",
+      "address": "355 Coteau St W"
+    },
+    {
+      "name": "Fairview Apartments",
+      "address": "665 Fairford St E"
+    },
+    {
+      "name": "Ominica Street Complex",
+      "address": "253 Ominica St W",
+      "also": [
+        "255 Ominica St W",
+        "257 Ominica St W",
+        "259 Ominica St W"
+      ]
+    },
+    {
+      "name": "Prince Charles Court",
+      "address": "1115 Prince Charles Pl",
+      "also": [
+        "1121 Prince Charles Pl",
+        "1386 Gordon Rd"
+      ]
+    },
+    {
+      "name": "11th Avenue Southwest (Housing Authority)",
+      "address": "1355 11th Ave SW"
+    },
+    {
+      "name": "Timothy Eaton Gardens",
+      "address": "510 Main St N"
+    },
+    {
+      "name": "Ross Street Terrace",
+      "address": "304 Ross St W",
+      "also": [
+        "306 Ross St W",
+        "308 Ross St W",
+        "310 Ross St W",
+        "312 Ross St W",
+        "314 Ross St W"
+      ]
+    },
+    {
+      "name": "Prairie Oasis Trailer Court",
+      "address": "1455 9th Ave NE",
+      "type": "Trailer court",
+      "names": [
+        "Prarie Oasis Trailer Court",
+        "Prairie Oasis Trailer Crt"
+      ]
+    },
+    {
+      "name": "Lakeview Trailer Court",
+      "address": "1295 9th Ave NE",
+      "type": "Trailer court",
+      "names": [
+        "Double J Landlease",
+        "Lakeview T.C."
+      ]
+    },
+    {
+      "name": "Trans Canada Trailer Court",
+      "address": "",
+      "type": "Trailer court"
+    }
+  ]
+}

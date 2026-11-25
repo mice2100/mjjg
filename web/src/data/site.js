@@ -27,7 +27,8 @@ export const SITE = {
   ],
   openDays: 'Tuesday – Sunday',
   closedDays: 'Closed Mondays',
-  deliveryFee: 6.31,
+  deliveryFee: 7, // house; apartments, condos and hotels pay deliveryFeeApartment (worker/lib/util.js)
+  deliveryFeeApartment: 8,
 };
 
 // Dishes highlighted on the home page (menu item ids from data/menu.json).

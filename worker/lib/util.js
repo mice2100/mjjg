@@ -2,14 +2,20 @@
 // channel (website, POS, WooCommerce import) uses the same numbers.
 
 export const TAX_RATE_PERCENT = 11; // Saskatchewan: GST 5% + PST 6%
-export const DELIVERY_FEE_CENTS = 631; // Moose Jaw flat delivery fee ($6.31)
+// Moose Jaw delivery fee: $7 to a house, $8 to an apartment, condo or hotel. Not taxed.
+export const DELIVERY_FEES_CENTS = { house: 700, apartment: 800 };
+export const DELIVERY_PLACES = Object.keys(DELIVERY_FEES_CENTS);
+export const deliveryFeeCents = (deliveryType, place) =>
+  deliveryType === 'delivery' ? DELIVERY_FEES_CENTS[place] ?? DELIVERY_FEES_CENTS.house : 0;
+// The place an existing order was charged for, from its stored fee.
+export const placeOfFee = (cents) => (cents === DELIVERY_FEES_CENTS.apartment ? 'apartment' : 'house');
 export const RESTAURANT_TIME_ZONE = 'America/Regina'; // Saskatchewan: CST all year, no DST
 export const MAX_QTY_PER_LINE = 50;
 
 export const toCents = (dollars) => Math.round(Number(dollars || 0) * 100);
 export const toDollars = (cents) => Math.round(Number(cents || 0)) / 100;
 
-// Tax is charged on (subtotal - discount + delivery fee). Tips are not taxed.
+// Tax is charged on food only: (subtotal - food discounts). Delivery fees and tips are not taxed.
 export const taxOn = (taxableCents) => Math.round((Math.max(0, taxableCents) * TAX_RATE_PERCENT) / 100);
 
 export const normalizePhone = (raw) => {

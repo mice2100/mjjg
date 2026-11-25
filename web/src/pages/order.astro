@@ -18,7 +18,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
       <div>
         <p class="eyebrow">Online ordering</p>
         <h1>Our menu</h1>
-        <p class="lede">Pickup is free. Delivery anywhere in Moose Jaw is {formatPrice(SITE.deliveryFee)}. Prices in CAD, before GST/PST.</p>
+        <p class="lede">Pickup is free. Delivery anywhere in Moose Jaw: {formatPrice(SITE.deliveryFee)} to a house, {formatPrice(SITE.deliveryFeeApartment)} to an apartment, condo or hotel (no tax on delivery). Prices in CAD, before GST/PST.</p>
       </div>
       <label class="search">
         <span class="visually-hidden">Search the menu</span>
@@ -72,7 +72,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
           <div data-step="cart">
             <div class="seg" role="radiogroup" aria-label="Pickup or delivery">
               <button type="button" role="radio" data-type="pickup">Pickup</button>
-              <button type="button" role="radio" data-type="delivery">Delivery · {formatPrice(SITE.deliveryFee)}</button>
+              <button type="button" role="radio" data-type="delivery">Delivery · from {formatPrice(SITE.deliveryFee)}</button>
             </div>
             <ul class="cart-lines" data-lines></ul>
             <p class="cart-empty" data-empty>Your order is empty. Add dishes from the menu.</p>
@@ -106,6 +106,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
               <input id="f-address" name="delivery_address" autocomplete="street-address" placeholder="House # and street, e.g. 740 thatcher"
                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="street-list" />
               <ul class="street-list" id="street-list" role="listbox" aria-label="Matching streets" data-street-list hidden></ul>
+              <small class="hint">Apartment, condo or hotel? The unit or room number is required, e.g. 123 Main St N, Apt 4. Delivery there is {formatPrice(SITE.deliveryFeeApartment)}.</small>
             </div>
             <div class="field"><label for="f-notes">Notes for the kitchen (optional)</label><textarea id="f-notes" name="customer_notes" rows="2" maxlength="500"></textarea></div>
             <label class="check"><input type="checkbox" name="marketing_opt_in" /> <span>Email me about new dishes and special offers from Jade Garden. You can unsubscribe at any time.</span></label>
@@ -179,6 +180,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   .mi-add { min-height: 40px; min-width: 64px; border-radius: 999px; border: 1.5px solid var(--jade-600); background: var(--paper); color: var(--jade-800); font-weight: 700; cursor: pointer; }
   .mi-add:hover { background: var(--jade-800); color: #fff; }
   .mi-add.in-cart { background: var(--jade-800); color: #fff; }
+  .mi-add:disabled { border-color: transparent; background: transparent; color: #9a3412; cursor: not-allowed; font-size: 13px; }
   .no-results { color: var(--muted); }
   .menu-item mark, .street-list mark { background: var(--gold-soft); color: inherit; border-radius: 2px; }
 
@@ -187,6 +189,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   .street-list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 15px; }
   .street-list li[aria-selected='true'] { background: var(--jade-50); }
   .street-list .st-house { font-weight: 700; }
+  .street-list .st-addr { display: block; font-size: 12px; color: var(--muted); }
   .street-list .st-tag { flex: none; font-size: 12px; color: var(--muted); align-self: center; }
 
   .cart { position: sticky; top: 132px; }

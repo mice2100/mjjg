@@ -3,8 +3,9 @@
 
 import { HttpError } from '../lib/http.js';
 import { getMenuItem, priceCents } from '../lib/menu.js';
-import { DELIVERY_FEE_CENTS, MAX_QTY_PER_LINE, taxOn } from '../lib/util.js';
+import { MAX_QTY_PER_LINE, deliveryFeeCents as feeFor, taxOn } from '../lib/util.js';
 import { evaluateCoupon, findCoupon, loadCouponStats } from './coupons.js';
+import { assertAvailable } from './options.js';
 
 export const DELIVERY_TYPES = ['pickup', 'delivery', 'dinein'];
 
@@ -46,13 +47,14 @@ export function resolveItems(rawItems) {
 
 /**
  * Builds a full price breakdown.
- * opts = { items, deliveryType, couponCode, source, email, phone, signedIn, strict, now }
+ * opts = { items, deliveryType, deliveryPlace ('house' | 'apartment'), couponCode, source, email, phone, signedIn, strict, now }
  */
 export async function buildQuote(db, opts) {
   const items = resolveItems(opts.items);
+  await assertAvailable(db, items); // dishes staff marked sold out
   const deliveryType = DELIVERY_TYPES.includes(opts.deliveryType) ? opts.deliveryType : 'pickup';
   const subtotalCents = items.reduce((sum, l) => sum + l.price_cents * l.qty, 0);
-  const deliveryFeeCents = deliveryType === 'delivery' ? DELIVERY_FEE_CENTS : 0;
+  const deliveryFeeCents = feeFor(deliveryType, opts.deliveryPlace);
 
   let discountCents = 0;
   let coupon = null;
@@ -84,9 +86,12 @@ export async function buildQuote(db, opts) {
 
   const fullSubtotal = items.reduce((sum, l) => sum + l.price_cents * l.qty, 0);
   discountCents = Math.min(discountCents, fullSubtotal + deliveryFeeCents);
-  const taxCents = taxOn(fullSubtotal - discountCents + deliveryFeeCents);
+  // A free-delivery coupon discounts the (untaxed) fee; every other discount is on food.
+  const deliveryDiscount = coupon?.discount_type === 'free_delivery' ? Math.min(discountCents, deliveryFeeCents) : 0;
+  const foodCents = fullSubtotal - Math.min(discountCents - deliveryDiscount, fullSubtotal);
+  const taxCents = taxOn(foodCents);
   const totalBeforeTipCents = fullSubtotal - discountCents + deliveryFeeCents + taxCents;
-  const tipBase = { foodCents: fullSubtotal - discountCents, totalBeforeTipCents };
+  const tipBase = { foodCents, totalBeforeTipCents };
   const tipChoice = TIP_CHOICES.includes(opts.tip) ? opts.tip : 'none';
   const tip = tipCents(tipChoice, tipBase);
 
@@ -96,6 +101,7 @@ export async function buildQuote(db, opts) {
     subtotal_cents: fullSubtotal,
     discount_cents: discountCents,
     delivery_fee_cents: deliveryFeeCents,
+    delivery_place: deliveryType === 'delivery' ? (opts.deliveryPlace === 'apartment' ? 'apartment' : 'house') : null,
     tax_cents: taxCents,
     tip_choice: tipChoice,
     tip_cents: tip,

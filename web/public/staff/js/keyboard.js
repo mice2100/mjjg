@@ -1,0 +1,163 @@
+// On-screen keyboard for iPads and tablets.
+// The tablet's own keyboard covers half the screen, so text fields get inputmode="none"
+// (the system keyboard stays hidden; a physical keyboard still works) and this keyboard docks
+// at the bottom. The app shrinks above it, so nothing is covered. Number fields
+// (inputmode decimal / numeric / tel) get a number pad. The header button switches back to
+// the tablet's own keyboard when needed (for example to type in another language).
+'use strict';
+
+const OSK = {
+  // On by default on touch screens; remembered per device.
+  on: (() => {
+    try {
+      const v = localStorage.getItem('jg_osk');
+      if (v != null) return v === 'on';
+    } catch { /* private mode */ }
+    return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  })(),
+  el: null, target: null, layout: 'abc', shift: false,
+};
+
+const TEXT_INPUT = 'input:not([type]), input[type="text"], input[type="search"], input[type="tel"], input[type="email"], input[type="number"], textarea';
+
+// Remember each field's real keyboard type, then hide the system keyboard (or restore it).
+function oskPrepare(root = document) {
+  root.querySelectorAll(TEXT_INPUT).forEach((el) => {
+    if (el.dataset.oskMode === undefined) el.dataset.oskMode = el.getAttribute('inputmode') || '';
+    if (el.dataset.oskMode === 'none') return; // the phone keypad field has its own buttons
+    if (OSK.on) el.setAttribute('inputmode', 'none');
+    else if (el.dataset.oskMode) el.setAttribute('inputmode', el.dataset.oskMode);
+    else el.removeAttribute('inputmode');
+  });
+}
+new MutationObserver((list) => {
+  for (const m of list) for (const n of m.addedNodes) if (n.nodeType === 1) oskPrepare(n.matches?.(TEXT_INPUT) ? n.parentNode || n : n);
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+const isNumberField = (el) => ['decimal', 'numeric', 'tel'].includes(el.dataset.oskMode);
+
+const ROWS = {
+  abc: [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', 'back'],
+    ['123', ',', 'space', '.', "'", 'done'],
+  ],
+  sym: [
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+    ['-', '/', ':', ';', '(', ')', '$', '&', '@', '#'],
+    ['%', '+', '=', '*', '"', '?', '!', 'back'],
+    ['abc', ',', 'space', '.', "'", 'done'],
+  ],
+  num: [
+    ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
+    ['.', '0', 'back'],
+  ],
+};
+const LABEL = { shift: '⇧', back: '⌫', space: 'space', done: 'Done', '123': '123', abc: 'ABC' };
+
+function oskRender() {
+  if (!OSK.el) {
+    OSK.el = document.createElement('div');
+    OSK.el.id = 'osk';
+    OSK.el.className = 'osk';
+    OSK.el.setAttribute('role', 'group');
+    OSK.el.setAttribute('aria-label', 'On-screen keyboard');
+    // pointerdown + preventDefault: tapping a key never takes the focus away from the field.
+    OSK.el.addEventListener('pointerdown', (e) => {
+      const b = e.target.closest('[data-k]');
+      e.preventDefault();
+      if (b) oskPress(b.dataset.k);
+    });
+    document.body.appendChild(OSK.el);
+  }
+  const layout = OSK.target && isNumberField(OSK.target) ? 'num' : OSK.layout;
+  const rows = ROWS[layout].map((row) => `<div class="osk-row">${row.map((k) => {
+    const text = LABEL[k] || (OSK.shift && layout === 'abc' ? k.toUpperCase() : k);
+    const cls = k.length > 1 ? ` osk-fn osk-${k}` : '';
+    return `<button type="button" tabindex="-1" class="osk-key${cls}${k === 'shift' && OSK.shift ? ' on' : ''}" data-k="${esc(k)}">${esc(text)}</button>`;
+  }).join('')}</div>`).join('');
+  OSK.el.className = `osk${layout === 'num' ? ' osk-numpad' : ''}`;
+  OSK.el.innerHTML = layout === 'num' ? `<div class="osk-pad">${rows}</div><div class="osk-side"><button type="button" tabindex="-1" class="osk-key osk-fn osk-done" data-k="done">Done</button></div>` : rows;
+}
+
+function oskShow(el) {
+  OSK.target = el;
+  // Capital first letter for names; plain for everything else.
+  OSK.shift = !isNumberField(el) && !el.value && /name/i.test(el.id + ' ' + (el.dataset.input || ''));
+  oskRender();
+  OSK.el.hidden = false;
+  document.body.classList.add('osk-open');
+  document.documentElement.style.setProperty('--osk-h', OSK.el.offsetHeight + 'px');
+  setTimeout(() => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }), 30);
+}
+
+function oskHide() {
+  OSK.target = null;
+  if (OSK.el) OSK.el.hidden = true;
+  document.body.classList.remove('osk-open');
+  document.documentElement.style.setProperty('--osk-h', '0px');
+}
+
+function oskType(el, text) {
+  const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? el.value.length;
+  try {
+    el.setRangeText(text, start, end, 'end');
+  } catch {
+    el.value += text; // type="email" / "number" have no selection API
+  }
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function oskPress(k) {
+  // The app may have re-rendered the field; type into whatever has the focus now.
+  const el = document.activeElement && document.activeElement.matches(TEXT_INPUT) ? document.activeElement : null;
+  if (!el) { oskHide(); return; }
+  OSK.target = el;
+  if (k === 'shift') { OSK.shift = !OSK.shift; oskRender(); return; }
+  if (k === '123') { OSK.layout = 'sym'; oskRender(); return; }
+  if (k === 'abc') { OSK.layout = 'abc'; oskRender(); return; }
+  if (k === 'done') {
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    el.blur();
+    oskHide();
+    return;
+  }
+  if (k === 'back') {
+    const start = el.selectionStart ?? el.value.length, end = el.selectionEnd ?? el.value.length;
+    if (start === end && start > 0) el.setSelectionRange(start - 1, end);
+    oskType(el, '');
+    return;
+  }
+  oskType(el, k === 'space' ? ' ' : OSK.shift && OSK.layout === 'abc' ? k.toUpperCase() : k);
+  if (OSK.shift) { OSK.shift = false; oskRender(); }
+}
+
+document.addEventListener('focusin', (e) => {
+  if (!OSK.on || !e.target.matches(TEXT_INPUT) || e.target.dataset.oskMode === 'none') return;
+  oskShow(e.target);
+});
+document.addEventListener('focusout', () => {
+  // Re-rendering moves the focus to a new copy of the field; only hide when nothing is typed into.
+  setTimeout(() => {
+    const a = document.activeElement;
+    if (!a || !a.matches(TEXT_INPUT) || a.dataset.oskMode === 'none') oskHide();
+    else if (OSK.on && a !== OSK.target) oskShow(a);
+  }, 60);
+});
+
+function oskToggle() {
+  OSK.on = !OSK.on;
+  try { localStorage.setItem('jg_osk', OSK.on ? 'on' : 'off'); } catch { /* private mode */ }
+  oskPrepare();
+  if (!OSK.on) oskHide();
+  oskButton();
+  toast(OSK.on ? 'Using the on-screen keyboard' : 'Using the tablet keyboard');
+}
+function oskButton() {
+  const b = $('oskBtn');
+  if (b) { b.textContent = OSK.on ? 'Keyboard: screen' : 'Keyboard: tablet'; b.classList.toggle('off', !OSK.on); }
+}
+oskPrepare();

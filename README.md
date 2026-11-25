@@ -5,7 +5,7 @@
 Jade Garden Restaurant (471 Main St N, Moose Jaw, SK) runs on **one Cloudflare Worker + one D1 database**:
 
 - **Customer website** (`/`, `/order/`, `/gallery/`, `/privacy/`): Astro static site with online ordering (pickup and delivery), coupons and optional Google/Apple/Facebook sign-in.
-- **Staff app** (`/staff/pos/`, `/staff/kitchen/`): iPad POS for phone orders and a kitchen order board with chime alerts. Protected by Cloudflare Access.
+- **Staff app** (`/staff/`; `/staff/pos/` opens on Order, `/staff/kitchen/` on Kitchen): iPad POS (phone, walk-in, dine-in tables), register (cash/card, split bills, receipts), kitchen display with chime alerts, and menu settings (item options, sold out, combo contents). Protected by Cloudflare Access. The previous screen stays at `/staff/classic/`.
 - **API** (`/api/*`): server-side pricing, orders, customers, coupons, payment webhooks.
 - **Online payment:** Clover Hosted Checkout (customers pay on Clover's page; no card data touches our code).
 - **WooCommerce import** (temporary): keeps the old WordPress orders flowing into the kitchen board until cutover.
@@ -19,6 +19,7 @@ Jade Garden Restaurant (471 Main St N, Moose Jaw, SK) runs on **one Cloudflare W
 | Item | State |
 |---|---|
 | Website, ordering, POS, kitchen board, coupons | Built and tested locally (`npm test`, e2e smoke tests) |
+| New staff app (dine-in tables, split payments, item options, sold out) | Built 2026-11, tested locally; **not deployed yet**. Deploying applies migration `0005` |
 | Test deployment | Previously on `jg.moosephotoprint.com` and a `workers.dev` host, under the previous developer's Cloudflare account |
 | Clover payments | **Sandbox only.** The previous keys were rejected (see §8). Production refuses web orders until real Clover keys are set |
 | Customer sign-in (Google/Apple/Facebook) | Not configured; the site works with guest checkout only |
@@ -182,6 +183,10 @@ The full column list and a ready-to-edit example are in [AGENTS.md §7](AGENTS.m
 **Refund a paid web order:** done by hand in the Clover dashboard. Cancelling in the kitchen does **not** refund.
 
 **Add a staff member:** add their email to the Access policy in Zero Trust.
+
+**Sold out / back in stock:** staff app → Menu → tap Available / Sold out next to the dish. The website stops selling it at the same time; no deploy needed.
+
+**Item options (spice level, requests …):** staff app → Menu → Item options. Only emails in `ADMIN_EMAILS` can change them (empty = every staff member).
 
 ---
 

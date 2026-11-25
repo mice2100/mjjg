@@ -1,7 +1,8 @@
 // Online ordering cart + checkout. Totals shown come from the Worker (/api/quote);
 // the Worker recomputes everything again when the order is placed.
 import { getConfig, getCustomer, onCustomerChange, updateProfile } from './account.js';
-import { searchMenu, searchStreets, fuzzyHighlight } from '../lib/search.js';
+import { searchMenu, searchStreets, searchPlaces, fuzzyHighlight } from '../lib/search.js';
+import { hasUnit } from '../lib/address.js';
 
 const STORAGE_KEY = 'jg_cart_v2';
 const PENDING_KEY = 'jg_pending_payment'; // {id, t} while the customer is on the Clover page
@@ -16,6 +17,8 @@ let quoteTimer = null;
 let turnstileToken = '';
 let turnstileWidget = null;
 let placeLabel = 'Continue to payment'; // 'Place order' when online payment is off (local dev)
+
+let soldOut = new Set(); // menu ids from /api/availability
 
 function load() {
   try {
@@ -52,6 +55,8 @@ function contact() {
   return {
     customer_email: form.customer_email.value.trim(),
     customer_phone: form.customer_phone.value.trim(),
+    // The server prices delivery from the address: $7 house, $8 apartment / hotel.
+    delivery_address: state.delivery_type === 'delivery' ? form.delivery_address.value.trim() : '',
   };
 }
 
@@ -82,8 +87,8 @@ function requestQuote() {
 function localEstimate() {
   let subtotal = 0;
   for (const { id, qty } of cartItems()) subtotal += Math.round(menu.get(id).price * 100) * qty;
-  const fee = state.delivery_type === 'delivery' ? 631 : 0;
-  const tax = Math.round(((subtotal + fee) * 11) / 100);
+  const fee = state.delivery_type === 'delivery' ? 700 : 0; // house rate until the server sees the address
+  const tax = Math.round((subtotal * 11) / 100); // food only; delivery is not taxed
   const before = subtotal + fee + tax;
   const tip = state.tip === 'round' ? Math.ceil(before / 100) * 100 - before : Math.round((subtotal * (Number(state.tip) || 0)) / 100);
   return { subtotal_cents: subtotal, discount_cents: 0, delivery_fee_cents: fee, tax_cents: tax, tip_cents: tip, total_cents: before + tip, items: [] };
@@ -91,10 +96,11 @@ function localEstimate() {
 
 function renderTotals() {
   const q = quote || localEstimate();
-  const rows = [['Subtotal', money(q.subtotal_cents)]];
+  // Food subtotal, tax (on food only), then the untaxed delivery fee.
+  const rows = [['Food subtotal', money(q.subtotal_cents)]];
   if (q.discount_cents) rows.push([`Discount${q.coupon ? ` (${q.coupon.code})` : ''}`, `−${money(q.discount_cents)}`, 'discount']);
-  if (state.delivery_type === 'delivery') rows.push(['Delivery', money(q.delivery_fee_cents)]);
   rows.push(['GST + PST (11%)', money(q.tax_cents)]);
+  if (state.delivery_type === 'delivery') rows.push([q.delivery_place === 'apartment' ? 'Delivery (apartment / hotel)' : 'Delivery', money(q.delivery_fee_cents)]);
   if (q.tip_cents) rows.push(['Tip', money(q.tip_cents)]);
   rows.push(['Total', money(q.total_cents), 'grand']);
 
@@ -169,8 +175,10 @@ function render() {
   $('[data-address-field]').hidden = state.delivery_type !== 'delivery';
   $$('[data-add]').forEach((b) => {
     const q = state.items[b.dataset.add];
+    const out = soldOut.has(Number(b.dataset.add));
+    b.disabled = out;
     b.classList.toggle('in-cart', Boolean(q));
-    b.textContent = q ? `${q} ✓` : 'Add';
+    b.textContent = out ? 'Sold out' : q ? `${q} ✓` : 'Add';
   });
   const bar = $('[data-cart-open]');
   bar.hidden = count === 0;
@@ -230,6 +238,13 @@ async function placeOrder(event) {
   if (!form.reportValidity()) return;
   if (state.delivery_type === 'delivery' && !form.delivery_address.value.trim()) {
     errorEl.textContent = 'Please enter your delivery address.';
+    errorEl.hidden = false;
+    form.delivery_address.focus();
+    return;
+  }
+  // Apartments, condos and hotels (the server decides which): the driver needs the unit or room.
+  if (state.delivery_type === 'delivery' && quote?.delivery_place === 'apartment' && !hasUnit(form.delivery_address.value)) {
+    errorEl.textContent = 'This looks like an apartment, condo, hotel or trailer court. Please add your unit, suite, room or lot number, e.g. "Unit 904", "Room 210" or "Lot A24".';
     errorEl.hidden = false;
     form.delivery_address.focus();
     return;
@@ -416,7 +431,8 @@ function setUpSearch() {
   });
 }
 
-// Moose Jaw street autocomplete, same matching as the staff POS.
+// Moose Jaw street autocomplete, same matching as the staff POS. Hotels and apartment
+// buildings are suggested too, by name ("langdon") or street address ("450 langdon").
 function setUpAddress() {
   const input = $('#f-address');
   const list = $('[data-street-list]');
@@ -427,8 +443,14 @@ function setUpAddress() {
   const loadStreets = () =>
     (streets ??= fetch('/api/streets')
       .then((r) => r.json())
-      .then((d) => d.streets || [])
-      .catch(() => ((streets = null), [])));
+      .then((d) => ({
+        streets: d.streets || [],
+        places: [
+          ...(d.hotels || []),
+          ...(d.apartment_buildings || []).map((b) => ({ ...b, type: b.type || 'Apartment', street: b.address, address: [b.address, ...(b.also || [])].join(' / ') || b.name })),
+        ],
+      }))
+      .catch(() => ((streets = null), { streets: [], places: [] })));
 
   const close = () => {
     list.hidden = true;
@@ -445,25 +467,39 @@ function setUpAddress() {
 
   const choose = (i) => {
     if (!results[i]) return;
-    input.value = results[i].full;
+    // A hotel or building: leave room for the unit or room number after it.
+    input.value = results[i].place ? results[i].full + ', ' : results[i].full;
     close();
     input.focus();
+    requestQuote();
   };
 
   const update = async () => {
     const value = input.value;
     const all = await loadStreets();
     if (input.value !== value) return; // a newer keystroke is in flight
-    results = searchStreets(all, value);
+    const places = /[a-z]{2}/i.test(value) && !value.includes(',')
+      ? searchPlaces(all.places, value, 4).map((r) => {
+          const street = r.place.street || r.place.address;
+          return { ...r, full: !street || r.place.name === street ? r.place.name || street : `${r.place.name}, ${street}` };
+        })
+      : [];
+    results = [...places, ...searchStreets(all.streets, value)];
     if (!results.length || (results.length === 1 && results[0].full === value.trim())) return close();
     list.replaceChildren(
       ...results.map((r, i) => {
         const li = document.createElement('li');
         li.id = `street-opt-${i}`;
         li.setAttribute('role', 'option');
-        li.innerHTML = `<span>${r.house ? '<span class="st-house"></span>' : ''}${fuzzyHighlight(r.street, r.positions)}</span><span class="st-tag"></span>`;
-        if (r.house) $('.st-house', li).textContent = r.house;
-        $('.st-tag', li).textContent = r.typeTag;
+        if (r.place) {
+          li.innerHTML = `<span>${fuzzyHighlight(r.place.name, r.positions)}<small class="st-addr"></small></span><span class="st-tag"></span>`;
+          $('.st-addr', li).textContent = r.place.street || r.place.address;
+          $('.st-tag', li).textContent = r.place.type || 'Hotel';
+        } else {
+          li.innerHTML = `<span>${r.house ? '<span class="st-house"></span>' : ''}${fuzzyHighlight(r.street, r.positions)}</span><span class="st-tag"></span>`;
+          if (r.house) $('.st-house', li).textContent = r.house;
+          $('.st-tag', li).textContent = r.typeTag;
+        }
         // mousedown so the choice lands before the input loses focus.
         li.addEventListener('mousedown', (e) => {
           e.preventDefault();
@@ -480,6 +516,7 @@ function setUpAddress() {
 
   input.addEventListener('focus', loadStreets, { once: true });
   input.addEventListener('input', update);
+  input.addEventListener('input', requestQuote); // house or apartment changes the delivery fee
   input.addEventListener('blur', close);
   input.addEventListener('keydown', (e) => {
     if (list.hidden) return;
@@ -511,6 +548,16 @@ export function initOrderPage() {
   save();
 
   $$('[data-add]').forEach((b) => (b.onclick = () => setQty(b.dataset.add, (state.items[b.dataset.add] || 0) + 1)));
+  // Dishes the restaurant marked sold out today (staff Menu tab): grey them out and take
+  // them out of a saved cart. The server refuses them anyway.
+  fetch('/api/availability')
+    .then((r) => r.json())
+    .then((data) => {
+      soldOut = new Set(data.sold_out || []);
+      Object.keys(state.items).filter((id) => soldOut.has(Number(id))).forEach((id) => setQty(id, 0));
+      render();
+    })
+    .catch(() => {});
   $$('.seg button').forEach(
     (b) =>
       (b.onclick = () => {

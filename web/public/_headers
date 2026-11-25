@@ -2,6 +2,11 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
 
+# The new-order ringtone is 11 MB: let staff iPads keep it for a day instead of re-downloading.
+/staff/ringtone.mp3
+  ! Cache-Control
+  Cache-Control: private, max-age=86400
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

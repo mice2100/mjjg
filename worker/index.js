@@ -16,6 +16,7 @@ import { backfillCustomers } from './services/customers.js';
 const ROUTES = [
   ['GET', '/api/config', pub.getConfig],
   ['GET', '/api/menu', pub.getMenuRoute],
+  ['GET', '/api/availability', pub.getAvailability],
   ['GET', '/api/streets', pub.getStreets],
   ['POST', '/api/quote', pub.postQuote],
   ['POST', '/api/orders', pub.postOrder],
@@ -28,7 +29,14 @@ const ROUTES = [
 
   ['GET', '/api/staff/orders', staff.getOrders, { staff: true }],
   ['POST', '/api/staff/orders', staff.postOrder, { staff: true }],
+  ['PUT', '/api/staff/orders/:id', staff.putOrder, { staff: true }],
   ['PATCH', '/api/staff/orders/:id', staff.patchOrder, { staff: true }],
+  ['POST', '/api/staff/orders/:id/payments', staff.postPayment, { staff: true }],
+  ['PATCH', '/api/staff/tickets/:id', staff.patchTicket, { staff: true }],
+  ['GET', '/api/staff/menu', staff.getMenuSettings, { staff: true }],
+  ['PUT', '/api/staff/menu/:id/availability', staff.putAvailability, { staff: true }],
+  ['PUT', '/api/staff/options/:id', staff.putOptionGroup, { staff: true, admin: true }],
+  ['DELETE', '/api/staff/options/:id', staff.removeOptionGroup, { staff: true, admin: true }],
   ['GET', '/api/staff/customers/lookup', staff.getCustomerLookup, { staff: true }],
   ['GET', '/api/staff/combos', staff.getCombos, { staff: true }],
   ['PUT', '/api/staff/combos/:id', staff.putCombo, { staff: true, admin: true }],

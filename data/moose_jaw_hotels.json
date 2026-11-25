@@ -15,6 +15,9 @@
     { "name": "Moose Jaw Inn", "address": "45 North Service Rd", "type": "Motel" },
     { "name": "Capone's Hideaway Motel", "address": "1 Main St N", "type": "Motel" },
     { "name": "Dreamland Motel", "address": "1035 Athabasca St E", "type": "Motel" },
+    { "name": "Prairie Oasis Tourist Complex", "address": "955 Thatcher Dr E", "type": "Motel" },
+    { "name": "Redland Cottage Bed & Breakfast", "address": "1122 Redland Ave", "type": "B&B" },
+    { "name": "Wakamow Heights Bed & Breakfast", "address": "690 Aldersgate St", "type": "B&B" },
     { "name": "Thriftlodge", "address": "Highway 1 East", "type": "Motel" }
   ]
 }
