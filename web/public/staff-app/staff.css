@@ -519,3 +519,6 @@ body.osk-open .fanwrap{display:none}
 .cal-day.today{border-color:var(--navy)}
 .cal-day.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .cal-day:disabled{opacity:.3}
+/* table numbers centred on the table top (also on the narrow tables) */
+.fmap .top{align-items:center;justify-content:center;overflow:visible;padding:0;gap:1px;flex-wrap:nowrap} /* .top is also the header class: drop its padding */
+.fmap .top .tno,.fmap .top .tsub{display:block;width:max-content;max-width:none;text-align:center;white-space:nowrap;margin:0 auto}

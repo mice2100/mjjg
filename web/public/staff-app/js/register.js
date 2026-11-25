@@ -64,7 +64,8 @@ function floorHtml() {
   const tiles = TABLES.map((t) => {
     const o = openTableOrder(t.id), slim = t.w < 7 ? 'slim' : '';
     const kind = t.round ? 'round' : t.id[0] === 'W' ? 'lr' : t.id === 'L1' ? 'l1' : 'tb';
-    const inset = { round: [17, 17, 17, 17], lr: [5, 25, 5, 25], l1: [24, 3, 24, 13], tb: [24, 4, 24, 4] }[kind];
+    // top right bottom left (%); L1 only needs room on the left when it has an odd end seat
+    const inset = { round: [17, 17, 17, 17], lr: [5, 25, 5, 25], l1: t.seats % 2 ? [24, 3, 24, 13] : [24, 4, 24, 4], tb: [24, 4, 24, 4] }[kind];
     const chairs = [];
     if (kind === 'round') for (let i = 0; i < t.seats; i++) { const a = (i * 360) / t.seats - 90, r = (a * Math.PI) / 180; chairs.push([50 + 41 * Math.cos(r), 50 + 41 * Math.sin(r), a + 90]); }
     else if (kind === 'lr') [[12, -90], [88, 90]].forEach(([x, rot]) => [30, 70].forEach((y) => chairs.push([x, y, rot])));
