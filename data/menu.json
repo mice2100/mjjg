@@ -527,21 +527,21 @@
       "image": "/images/menu/83.webp"
     },
     {
-      "id": 84,
-      "short": "BF VEG",
-      "code": "V4",
-      "name": "V4 Beef with Mixed Vegetables",
-      "price": 15.95,
-      "category": "Vegetables"
-    },
-    {
       "id": 85,
       "short": "CK VEG",
-      "code": "V5",
-      "name": "V5 Chicken with Mixed Vegetables",
+      "code": "V4",
+      "name": "V4 Chicken with Mixed Vegetables",
       "price": 15.95,
       "category": "Vegetables",
       "gf": true
+    },
+    {
+      "id": 84,
+      "short": "BF VEG",
+      "code": "V5",
+      "name": "V5 Beef with Mixed Vegetables",
+      "price": 16.95,
+      "category": "Vegetables"
     },
     {
       "id": 86,
