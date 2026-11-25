@@ -1,5 +1,5 @@
-// Staff API (POS + kitchen board). Every handler here is wrapped by requireStaff in index.js;
-// handlers registered with { admin: true } also pass isStaffAdmin.
+// Staff API (kitchen board, POS, admin). Every handler here is wrapped by requireStaff in index.js,
+// which checks the caller's Access sign-in for the route's role (see auth/staff.js).
 
 import { HttpError, json, readJson } from '../lib/http.js';
 import { normalizePhone, toDollars } from '../lib/util.js';
@@ -8,10 +8,9 @@ import { addPayment, createStaffOrder, listTickets, setTicketDone, updateStaffOr
 import { deleteOptionGroup, listOptionGroups, listSoldOut, saveOptionGroup, setSoldOut } from '../services/options.js';
 import { lookupCustomerByPhone } from '../services/customers.js';
 import { listCombos, saveCombo } from '../services/combos.js';
-import { isStaffAdmin } from '../auth/staff.js';
 
-// GET /api/staff/orders            → the kitchen board (pending + last 7 days) and kitchen tickets
-// GET /api/staff/orders?since=<iso> → only orders and tickets created or changed after that time
+// GET /api/<kitchen|pos>/orders            → open orders + the last 7 days, kitchen tickets, sold-out dishes
+// GET /api/<kitchen|pos>/orders?since=<iso> → only orders and tickets created or changed after that time
 export async function getOrders(request, env) {
   const serverTime = new Date().toISOString();
   const since = new URL(request.url).searchParams.get('since');
@@ -29,7 +28,7 @@ export async function getOrders(request, env) {
 const staffOrder = async (env, row) => (await withPayments(env.DB, [row]))[0];
 
 // Body with `lines` → POS order (options, staff discounts, dine-in, kitchen tickets).
-// Body with `items` → the older phone-order shape, still used by /staff/classic/.
+// Body with `items` → the older phone-order shape (kept for API compatibility).
 export async function postOrder(request, env) {
   const body = await readJson(request);
   if (Array.isArray(body.lines)) {
@@ -66,7 +65,7 @@ export async function patchTicket(request, env, { id }) {
 // Item options and sold-out switches (Menu tab).
 export async function getMenuSettings(request, env, params, staff) {
   const [groups, soldOut] = await Promise.all([listOptionGroups(env.DB), listSoldOut(env.DB)]);
-  return json({ success: true, groups, sold_out: soldOut, can_edit: isStaffAdmin(env, staff) });
+  return json({ success: true, groups, sold_out: soldOut, can_edit: staff?.role === 'admin' });
 }
 
 export async function putOptionGroup(request, env, { id }, staff) {
@@ -84,7 +83,7 @@ export async function putAvailability(request, env, { id }, staff) {
   return json({ success: true, ...(await setSoldOut(env.DB, id, Boolean(body.sold_out), staff?.email)) });
 }
 
-// GET /api/staff/customers/lookup?phone=306-555-1234 → known customer, addresses, order history
+// GET /api/pos/customers/lookup?phone=306-555-1234 → known customer, addresses, order history
 export async function getCustomerLookup(request, env) {
   const phone = normalizePhone(new URL(request.url).searchParams.get('phone'));
   if (phone.length !== 10) throw new HttpError(400, 'Enter a 10-digit phone number.');
@@ -108,7 +107,7 @@ export async function getCustomerLookup(request, env) {
 }
 
 export async function getCombos(request, env, params, staff) {
-  return json({ success: true, combos: await listCombos(env.DB), can_edit: isStaffAdmin(env, staff) });
+  return json({ success: true, combos: await listCombos(env.DB), can_edit: staff?.role === 'admin' });
 }
 
 export async function putCombo(request, env, { id }, staff) {

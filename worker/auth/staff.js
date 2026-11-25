@@ -1,19 +1,30 @@
-// Staff authentication = Cloudflare Access (Zero Trust).
-// Access protects /staff/* and /api/staff/* at the edge (email one-time PIN or Google);
-// this check re-verifies the Access JWT so the API stays closed even if an Access
-// policy is misconfigured or the workers.dev URL is hit directly. Fails closed.
+// Staff authentication = Cloudflare Access (Zero Trust), one Access application per role:
+//
+//   role      pages        API              env var (the application's AUD tag)
+//   kitchen   /staff/      /api/kitchen/*   ACCESS_AUD_KITCHEN
+//   pos       /pos/        /api/pos/*       ACCESS_AUD_POS
+//   admin     /jadmin/     /api/admin/*     ACCESS_AUD_ADMIN
+//
+// Who may use a role is decided in the Cloudflare dashboard (each application's policy), never
+// in this repo. Access checks the sign-in at the edge; this function re-verifies the Access JWT
+// and that it was issued for THIS role's application, so a kitchen sign-in can never call the
+// admin API even if an Access policy is misconfigured. Fails closed.
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { HttpError, getCookie, isDev } from '../lib/http.js';
 
+export const STAFF_ROLES = ['kitchen', 'pos', 'admin'];
+
 let jwks = null;
 let jwksTeam = null;
 
-export async function requireStaff(request, env) {
-  if (isDev(env)) return { email: 'dev@localhost' };
+export async function requireStaff(request, env, role) {
+  if (!STAFF_ROLES.includes(role)) throw new HttpError(500, 'Unknown staff role');
+  if (isDev(env)) return { email: 'dev@localhost', role };
 
   const team = env.ACCESS_TEAM_DOMAIN; // e.g. 'jadegarden.cloudflareaccess.com'
-  if (!team || !env.ACCESS_AUD) throw new HttpError(503, 'Staff access is not configured');
+  const aud = env[`ACCESS_AUD_${role.toUpperCase()}`];
+  if (!team || !aud) throw new HttpError(503, 'Staff access is not configured');
 
   const token = request.headers.get('Cf-Access-Jwt-Assertion') || getCookie(request, 'CF_Authorization');
   if (!token) throw new HttpError(401, 'Staff sign-in required');
@@ -23,20 +34,9 @@ export async function requireStaff(request, env) {
     jwksTeam = team;
   }
   try {
-    const { payload } = await jwtVerify(token, jwks, { issuer: `https://${team}`, audience: env.ACCESS_AUD });
-    return { email: payload.email };
+    const { payload } = await jwtVerify(token, jwks, { issuer: `https://${team}`, audience: aud });
+    return { email: payload.email, role };
   } catch {
     throw new HttpError(401, 'Staff sign-in required');
   }
-}
-
-// Combo (menu) editing. ADMIN_EMAILS (comma-separated var) lists who may edit; when it is
-// empty, every signed-in staff member may.
-export function isStaffAdmin(env, staff) {
-  const admins = String(env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (admins.length === 0) return Boolean(staff);
-  return Boolean(staff?.email && admins.includes(String(staff.email).toLowerCase()));
 }

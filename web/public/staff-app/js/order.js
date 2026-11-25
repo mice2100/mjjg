@@ -6,7 +6,7 @@
 function newDraft(type, extra = {}) {
   return {
     id: null, type, source: type === 'dinein' ? 'Walk-in' : 'Phone', table: null,
-    name: '', phone: '', addr: '', place: 'house', notes: '', lines: [], disc: null, paid: 0,
+    name: '', phone: '', addr: '', place: 'house', notes: '', slot: '', lines: [], disc: null, paid: 0,
     pendingVoids: [], removed: [], dirty: false, created_at: new Date().toISOString(), ...extra,
   };
 }
@@ -16,6 +16,7 @@ function draftFromOrder(o) {
     id: o.id, type: o.delivery_type, source: o.source, table: o.table_id,
     name: o.customer_name, phone: digitsOf(o.customer_phone), addr: o.delivery_address, notes: o.customer_notes,
     place: o.delivery_place || guessPlace(o.delivery_address),
+    slot: /^(ASAP|Pick Up|Dine-in)$/i.test(o.delivery_time_slot || '') ? '' : o.delivery_time_slot || '',
     lines: o.items.filter((it) => it.id != null).map((it) => ({
       uid: it.uid, id: it.id, qty: it.qty, sent: it.sent, note: it.note, disc: it.disc, price: it.price,
       mods: it.mods.map((m) => ({ g: m.g, n: m.n, price: m.price })),
@@ -75,6 +76,7 @@ function draftBody(d, send) {
   return {
     delivery_type: d.type, source: d.source, table_id: d.type === 'dinein' ? d.table : null,
     customer_name: d.name, customer_phone: d.phone, delivery_address: d.type === 'delivery' ? d.addr : '', delivery_place: d.place,
+    delivery_time_slot: d.type === 'dinein' ? '' : d.slot,
     customer_notes: d.notes, discount: d.disc, send,
     lines: d.lines.map((l) => ({ uid: l.uid, id: l.id, qty: l.qty, note: l.note, disc: l.disc, mods: l.mods.map((m) => ({ g: m.g, n: m.n })) })),
   };
@@ -91,8 +93,8 @@ async function saveDraft({ send = false, quiet = false } = {}) {
   }
   saving = true;
   try {
-    const r = d.id ? await api('PUT', `/api/staff/orders/${encodeURIComponent(d.id)}`, draftBody(d, send))
-      : await api('POST', '/api/staff/orders', draftBody(d, send));
+    const r = d.id ? await api('PUT', `${API}/orders/${encodeURIComponent(d.id)}`, draftBody(d, send))
+      : await api('POST', `${API}/orders`, draftBody(d, send));
     MINE.add(r.order.id);
     upsertOrder(r.order);
     U.draft = draftFromOrder(r.order);
@@ -173,6 +175,7 @@ function orderPanel(d) {
     fields = `<div class="field wide"><label>Customer</label>
       <div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>${who}${d.type === 'delivery' ? `<br><span class="muted">${d.addr ? esc(d.addr) : '<span class="st-danger">No delivery address</span>'}</span>` : ''}</span>
       <button class="btn sm" data-act="editCustomer">${d.name || d.phone ? 'Edit' : 'Add'}</button></div>
+      <div class="muted" style="font-size:13px">${d.type === 'delivery' ? 'Deliver' : 'Pick up'}: <b class="${d.slot ? 'st-unsent' : ''}">${esc(d.slot || 'ASAP')}</b></div>
       ${d.type === 'delivery' ? `<div class="chips" role="group" aria-label="Delivery to">${Object.entries(PLACES).map(([k, n]) => `<button class="chip ${d.place === k ? 'on' : ''}" data-act="place" data-p="${k}" aria-pressed="${d.place === k}">${n} · ${$c(DELIVERY_FEES[k])}</button>`).join('')}</div>` : ''}</div>`;
   }
   const lines = d.lines.map((l) => {

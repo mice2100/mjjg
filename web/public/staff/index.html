@@ -6,9 +6,10 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Jade Garden POS</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<!-- One app at /staff/, /staff/pos/ (opens on Order) and /staff/kitchen/ (opens on Kitchen).
-     Absolute paths: the same file is served at all three addresses. The old screen is /staff/classic/. -->
-<link rel="stylesheet" href="/staff/staff.css">
+<!-- One app, three sites with their own Cloudflare Access sign-in: /staff/ (kitchen), /pos/ (orders,
+     payments) and /jadmin/ (menu settings). The same file is served at all three (web/src/pages/pos,
+     web/src/pages/jadmin); code and styles load from /staff-app/ with absolute paths. -->
+<link rel="stylesheet" href="/staff-app/staff.css">
 </head>
 <body>
 <div class="app">
@@ -29,13 +30,14 @@
 <div id="toast" class="toast" role="status" hidden></div>
 
 <!-- Plain scripts sharing one global scope, in this order. -->
-<script src="/staff/js/core.js"></script>
-<script src="/staff/js/keyboard.js"></script>
-<script src="/staff/js/order.js"></script>
-<script src="/staff/js/start.js"></script>
-<script src="/staff/js/register.js"></script>
-<script src="/staff/js/kitchen.js"></script>
-<script src="/staff/js/menu.js"></script>
-<script src="/staff/js/main.js"></script>
+<script src="/staff-app/js/core.js"></script>
+<script src="/staff-app/js/keyboard.js"></script>
+<script src="/staff-app/js/order.js"></script>
+<script src="/staff-app/js/start.js"></script>
+<script src="/staff-app/js/register.js"></script>
+<script src="/staff-app/js/print.js"></script>
+<script src="/staff-app/js/kitchen.js"></script>
+<script src="/staff-app/js/menu.js"></script>
+<script src="/staff-app/js/main.js"></script>
 </body>
 </html>

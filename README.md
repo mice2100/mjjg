@@ -5,7 +5,7 @@
 Jade Garden Restaurant (471 Main St N, Moose Jaw, SK) runs on **one Cloudflare Worker + one D1 database**:
 
 - **Customer website** (`/`, `/order/`, `/gallery/`, `/privacy/`): Astro static site with online ordering (pickup and delivery), coupons and optional Google/Apple/Facebook sign-in.
-- **Staff app** (`/staff/`; `/staff/pos/` opens on Order, `/staff/kitchen/` on Kitchen): iPad POS (phone, walk-in, dine-in tables), register (cash/card, split bills, receipts), kitchen display with chime alerts, and menu settings (item options, sold out, combo contents). Protected by Cloudflare Access. The previous screen stays at `/staff/classic/`.
+- **Staff app**, three sites with their own Cloudflare Access sign-in: `/pos/` iPad POS (phone, walk-in, dine-in tables), register (cash/card, split bills, thermal receipts, pickup/delivery time slots); `/staff/` kitchen display with the new-order ringtone; `/jadmin/` menu settings (item options, sold out, combo contents).
 - **API** (`/api/*`): server-side pricing, orders, customers, coupons, payment webhooks.
 - **Online payment:** Clover Hosted Checkout (customers pay on Clover's page; no card data touches our code).
 - **WooCommerce import** (temporary): keeps the old WordPress orders flowing into the kitchen board until cutover.
@@ -73,7 +73,7 @@ docs/architecture_and_guide.md   POS search, printer hardware, cutover SOP
 tools/               Optional offline Python helpers (WooCommerce inspection, old image import)
 ```
 
-How it fits together: the browser loads static pages from `web/dist`; anything under `/api/*` runs `worker/index.js`, which reads/writes D1. A cron job runs **every minute** to expire unpaid Clover checkouts and (until cutover) import WooCommerce orders. Staff pages and `/api/staff/*` are behind Cloudflare Access.
+How it fits together: the browser loads static pages from `web/dist`; anything under `/api/*` runs `worker/index.js`, which reads/writes D1. A cron job runs **every minute** to expire unpaid Clover checkouts and (until cutover) import WooCommerce orders. Staff pages and `/api/{kitchen,pos,admin}/*` are behind Cloudflare Access.
 
 ---
 
@@ -106,10 +106,9 @@ cp .deploy.env.example .deploy.env      # fill CLOUDFLARE_API_TOKEN and CLOUDFLA
 |---|---|
 | `d1_databases[0].database_id` | `npm run deploy:setup` finds or creates `jadegarden-db` in your account and writes the new id for you |
 | `routes` | Currently the old test host `jg.moosephotoprint.com`. Replace with `w2.mjjadegarden.com` for the staged launch (see §7) |
-| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | Replace with your own Zero Trust values (step 4.5) |
+| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD_KITCHEN`, `ACCESS_AUD_POS`, `ACCESS_AUD_ADMIN` | Your Zero Trust team domain and one AUD tag per Access application (step 4.5) |
 | `CLOVER_MERCHANT_ID`, `CLOVER_ENV` | Your Clover merchant UUID and `sandbox` or `production` (step 4.6) |
 | `PUBLIC_SITE_URL`, `WC_STORE_URL` | `https://mjjadegarden.com` |
-| `ADMIN_EMAILS` | Emails allowed to edit combo contents in the staff app. Empty = every staff member |
 
 ### 4.4 First deploy
 
@@ -121,7 +120,15 @@ It creates the D1 database, applies migrations, generates `SESSION_SECRET` in `.
 
 ### 4.5 Protect the staff app (Cloudflare Access)
 
-Zero Trust → Access → Applications → Add **self-hosted**. Add two paths on your host: `/staff/*` and `/api/staff/*`. Policy: allow the staff emails (One-time PIN login works). Copy the **team domain** (`xxxx.cloudflareaccess.com`) and the application **AUD tag** into `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` in `wrangler.jsonc`, then `npm run deploy`. Until this is set the staff API refuses every request (it fails closed, on purpose).
+Zero Trust → Access → Applications → Add **self-hosted**, three times, all on your host (One-time PIN login works):
+
+| Application | Paths | Who (Access groups) | `wrangler.jsonc` var |
+|---|---|---|---|
+| Kitchen | `/staff`, `/api/kitchen` | Kitchen staff + Admins | `ACCESS_AUD_KITCHEN` |
+| POS (phone orders) | `/pos`, `/api/pos` | POS staff + Admins | `ACCESS_AUD_POS` |
+| Admin (combos) | `/jadmin`, `/api/admin` | Admins | `ACCESS_AUD_ADMIN` |
+
+Create the three groups first (Access controls → Access groups), reference them in each application's policy, copy each **AUD tag** into the matching var and the **team domain** into `ACCESS_TEAM_DOMAIN`, then `npm run deploy`. To add or remove a person later, just edit the group; no deploy. Until a role's AUD is set, its API refuses every request (it fails closed, on purpose).
 
 ### 4.6 Clover (online payments)
 
@@ -198,9 +205,9 @@ The domain is already on Cloudflare, so we launch in two stages. WordPress keeps
 
 1. In `wrangler.jsonc` set `routes` to `[{ "pattern": "w2.mjjadegarden.com", "custom_domain": true }]`, then `npm run deploy`. Wrangler creates the DNS record and certificate. (`PUBLIC_SITE_URL` may stay `https://mjjadegarden.com`.)
 2. Add `w2.mjjadegarden.com` to the Access application (§4.5) and to the Turnstile widget hostnames.
-3. Set the Clover webhook to `https://w2.mjjadegarden.com/api/webhooks/clover` (and the WooCommerce webhooks to `https://w2.mjjadegarden.com/api/webhooks/woocommerce`).
-4. Keep `CLOVER_ENV` at `sandbox` while testing: place orders, pay with a test card, see them on `/staff/kitchen/`, mark them complete. The owner reviews copy, hours, prices, privacy text and photos here.
-5. Let staff use `https://w2.mjjadegarden.com/staff/pos/` and `/staff/kitchen/` for real (phone orders, WordPress orders imported by the cron). Run like this until it is stable.
+3. Set the Clover webhook to `https://w2.mjjadegarden.com/api/webhooks/clover` (a WooCommerce webhook to `https://w2.mjjadegarden.com/api/webhooks/woocommerce` is optional: the cron already imports orders every minute).
+4. Keep `CLOVER_ENV` at `sandbox` while testing: place orders, pay with a test card, see them on `/staff/`, mark them complete. The owner reviews copy, hours, prices, privacy text and photos here.
+5. Let staff use `https://w2.mjjadegarden.com/pos/` (phone orders) and `/staff/` (kitchen) for real; managers use `/jadmin/` (combos) (phone orders, WordPress orders imported by the cron). Run like this until it is stable.
 
 **Stage 2: go live on `www`**
 
@@ -240,7 +247,7 @@ Order confirmation email and coupon campaigns (see `TODO.md`), scheduled "order 
 
 | Symptom | Likely cause |
 |---|---|
-| `/staff/` shows a Cloudflare login, then 401/403 from `/api/staff/*` | `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD` wrong, or the Access app does not cover both `/staff/*` and `/api/staff/*` |
+| `/staff/` shows a Cloudflare login, then 401/403 from `/api/kitchen/*` | `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD_KITCHEN` wrong, or the Access app does not cover both `/staff` and `/api/kitchen` (same for `/pos` and `/jadmin`) |
 | Checkout returns 503 | No `CLOVER_PRIVATE_KEY` in production |
 | Checkout returns 502 | Clover rejected the request: check merchant UUID, token, environment |
 | Customer paid but the order stays "awaiting" | Webhook URL or `CLOVER_WEBHOOK_SECRET` wrong. The cron also checks Clover's payments API every minute as a backup |

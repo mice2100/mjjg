@@ -3,7 +3,7 @@
 //   scheduled -> expire abandoned Clover checkouts, customer backfill, WooCommerce order sync (cron in wrangler.jsonc)
 
 import { HttpError, errorResponse } from './lib/http.js';
-import { isStaffAdmin, requireStaff } from './auth/staff.js';
+import { requireStaff } from './auth/staff.js';
 import * as pub from './routes/public.js';
 import * as account from './routes/account.js';
 import * as staff from './routes/staff.js';
@@ -11,6 +11,11 @@ import { postCloverWebhook, postWooWebhook } from './routes/webhooks.js';
 import { syncWooOrders } from './services/woocommerce.js';
 import { expireAbandonedCheckouts, reconcileCloverPayments } from './services/orders.js';
 import { backfillCustomers } from './services/customers.js';
+
+// [method, path, handler, roles] → one route per role: /api/<role>/<path>, checked against that role's Access app.
+function staffRoutes(list) {
+  return list.flatMap(([method, path, handler, roles]) => roles.map((role) => [method, `/api/${role}/${path}`, handler, { staff: role }]));
+}
 
 // [method, URLPattern pathname, handler, options]
 const ROUTES = [
@@ -27,19 +32,23 @@ const ROUTES = [
   ['GET', '/api/me', account.getMe],
   ['PATCH', '/api/me', account.patchMe],
 
-  ['GET', '/api/staff/orders', staff.getOrders, { staff: true }],
-  ['POST', '/api/staff/orders', staff.postOrder, { staff: true }],
-  ['PUT', '/api/staff/orders/:id', staff.putOrder, { staff: true }],
-  ['PATCH', '/api/staff/orders/:id', staff.patchOrder, { staff: true }],
-  ['POST', '/api/staff/orders/:id/payments', staff.postPayment, { staff: true }],
-  ['PATCH', '/api/staff/tickets/:id', staff.patchTicket, { staff: true }],
-  ['GET', '/api/staff/menu', staff.getMenuSettings, { staff: true }],
-  ['PUT', '/api/staff/menu/:id/availability', staff.putAvailability, { staff: true }],
-  ['PUT', '/api/staff/options/:id', staff.putOptionGroup, { staff: true, admin: true }],
-  ['DELETE', '/api/staff/options/:id', staff.removeOptionGroup, { staff: true, admin: true }],
-  ['GET', '/api/staff/customers/lookup', staff.getCustomerLookup, { staff: true }],
-  ['GET', '/api/staff/combos', staff.getCombos, { staff: true }],
-  ['PUT', '/api/staff/combos/:id', staff.putCombo, { staff: true, admin: true }],
+  // Staff API: one Cloudflare Access application per role (worker/auth/staff.js).
+  //   kitchen  /staff/   → /api/kitchen/*     pos  /pos/  → /api/pos/*     admin  /jadmin/ → /api/admin/*
+  ...staffRoutes([
+    ['GET', 'orders', staff.getOrders, ['kitchen', 'pos']], // orders + kitchen tickets + sold out
+    ['POST', 'orders', staff.postOrder, ['pos']],
+    ['PUT', 'orders/:id', staff.putOrder, ['pos']],
+    ['PATCH', 'orders/:id', staff.patchOrder, ['kitchen', 'pos']], // status, or {received:true}
+    ['POST', 'orders/:id/payments', staff.postPayment, ['pos']],
+    ['PATCH', 'tickets/:id', staff.patchTicket, ['kitchen']],
+    ['GET', 'customers/lookup', staff.getCustomerLookup, ['pos']],
+    ['GET', 'menu', staff.getMenuSettings, ['kitchen', 'pos', 'admin']], // option groups + sold out
+    ['PUT', 'menu/:id/availability', staff.putAvailability, ['kitchen', 'pos', 'admin']],
+    ['PUT', 'options/:id', staff.putOptionGroup, ['admin']],
+    ['DELETE', 'options/:id', staff.removeOptionGroup, ['admin']],
+    ['GET', 'combos', staff.getCombos, ['kitchen', 'pos', 'admin']],
+    ['PUT', 'combos/:id', staff.putCombo, ['admin']],
+  ]),
 
   ['POST', '/api/webhooks/woocommerce', postWooWebhook],
   ['POST', '/api/webhooks/clover', postCloverWebhook],
@@ -55,8 +64,7 @@ export default {
         if (!match) continue;
         pathMatched = true;
         if (route.method !== request.method) continue;
-        const staffUser = route.opts.staff ? await requireStaff(request, env) : null;
-        if (route.opts.admin && !isStaffAdmin(env, staffUser)) throw new HttpError(403, 'Only a manager can change this.');
+        const staffUser = route.opts.staff ? await requireStaff(request, env, route.opts.staff) : null;
         return await route.handler(request, env, match.pathname.groups, staffUser);
       }
       throw new HttpError(pathMatched ? 405 : 404, pathMatched ? 'Method not allowed' : 'Not found');

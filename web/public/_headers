@@ -2,10 +2,24 @@
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow
 
+/pos/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+/jadmin/*
+  Cache-Control: no-store
+  X-Robots-Tag: noindex, nofollow
+
+# Code, styles and sounds of the staff app, shared by /staff/, /pos/ and /jadmin/. No data here
+# (that is all behind /api/<role>/*), so it sits outside the Access applications.
+/staff-app/*
+  Cache-Control: no-cache
+  X-Robots-Tag: noindex, nofollow
+
 # The new-order ringtone is 11 MB: let staff iPads keep it for a day instead of re-downloading.
-/staff/ringtone.mp3
+/staff-app/ringtone.mp3
   ! Cache-Control
-  Cache-Control: private, max-age=86400
+  Cache-Control: public, max-age=86400
 
 /*
   X-Content-Type-Options: nosniff

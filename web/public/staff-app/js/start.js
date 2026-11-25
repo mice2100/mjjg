@@ -9,6 +9,7 @@ function openStart(type, { pendingItem = null, phone = '', edit = false } = {}) 
   U.start = {
     edit, type: d ? d.type : type === 'delivery' ? 'delivery' : 'pickup',
     phone: d ? d.phone : digitsOf(phone), name: d ? d.name : '', notes: d ? d.notes : '',
+    slot: d ? d.slot : '', slotDay: 0,
     savedAddr: d && d.type === 'delivery' ? d.addr : '', place: d ? d.place : null, addrIdx: -1, street: '', apt: '', hotel: null,
     lookup: null, state: 'idle', err: '', seq: 0, hist: -1, pendingItem, tried: false, ac: { list: [], i: -1 },
   };
@@ -23,7 +24,7 @@ async function lookupPhone() {
   s.state = 'loading';
   renderModal();
   try {
-    const data = await api('GET', '/api/staff/customers/lookup?phone=' + encodeURIComponent(s.phone));
+    const data = await api('GET', `${API}/customers/lookup?phone=` + encodeURIComponent(s.phone));
     if (U.start !== s || seq !== s.seq) return;
     s.lookup = data;
     s.state = 'done';
@@ -96,6 +97,20 @@ function startPlace() {
   return guessPlace(startAddress());
 }
 
+// Pickup / delivery time: ASAP or one 30-minute slot in take-out hours (mice2100's slots module).
+function slotsHtml() {
+  const s = U.start;
+  if (!S.slots) return '';
+  const days = S.slots.getSlotDays(new Date());
+  if (s.slot) { const i = days.findIndex((d) => d.slots.some((x) => x.value === s.slot)); if (i >= 0) s.slotDay = i; }
+  const day = days[Math.min(s.slotDay, days.length - 1)];
+  const tabs = days.map((d, i) => `<button type="button" class="chip ${d === day ? 'on' : ''}" data-act="slotDay" data-i="${i}">${esc(d.label)}</button>`).join('');
+  const chips = day ? (day.isToday ? `<button type="button" class="chip ${!s.slot ? 'on' : ''}" data-act="slot" data-v="">ASAP</button>` : '')
+    + day.slots.map((x) => `<button type="button" class="chip ${s.slot === x.value ? 'on' : ''}" data-act="slot" data-v="${esc(x.value)}">${esc(x.label)}</button>`).join('') : '';
+  return `<div class="field"><label>${s.type === 'delivery' ? 'Delivery' : 'Pickup'} time <span class="muted">· ${esc(s.slot || 'ASAP')}</span></label>
+    <div class="chips">${tabs}</div><div class="chips slots">${chips || '<span class="muted">No time slots left.</span>'}</div></div>`;
+}
+
 function aptInput(e) {
   const s = U.start, apt = startPlace() === 'apartment';
   const a = startAddress() || s.street;
@@ -157,6 +172,7 @@ function startModal() {
       ${banner}
       ${c && c.found && c.notes ? `<div class="cnotes">${esc(c.notes)}</div>` : ''}
       <div class="typegrid" role="group" aria-label="Order type">${types}</div>
+      ${slotsHtml()}
       <div class="field"><label for="s-name">Customer name</label><input id="s-name" class="input" value="${esc(s.name)}" autocomplete="off" data-input="name" ${e.name ? 'aria-invalid="true"' : ''}>${e.name ? `<span class="ferr">${e.name}</span>` : ''}</div>
       ${addrList}
       <div class="field"><label for="s-notes">Order notes <span class="muted">(optional)</span></label><input id="s-notes" class="input" value="${esc(s.notes)}" placeholder="e.g. call on arrival, extra napkins" data-input="notes" maxlength="500"></div>
@@ -173,7 +189,7 @@ async function startGo(reorderIdx = null) {
   const s = U.start;
   s.tried = true;
   if (Object.keys(startErrors()).length) { renderModal(); return; }
-  const fields = { type: s.type, name: s.name.trim(), phone: s.phone, addr: s.type === 'delivery' ? startAddress() : '', place: startPlace(), notes: s.notes.trim() };
+  const fields = { type: s.type, name: s.name.trim(), phone: s.phone, addr: s.type === 'delivery' ? startAddress() : '', place: startPlace(), notes: s.notes.trim(), slot: s.slot };
   if (s.edit) {
     Object.assign(U.draft, fields);
     touch();
@@ -287,6 +303,7 @@ async function openExisting(id) {
 function handleCallHash() {
   const m = location.hash.match(/^#call=(\+?[\d-]+)$/);
   if (!m) return;
+  if (ROLE !== 'pos') { location.replace('/pos/' + location.hash); return; } // phone orders are taken on the POS
   history.replaceState(null, '', location.pathname + location.search);
   if (U.draft && U.draft.dirty) { toast(`Incoming call ${formatPhone(digitsOf(m[1]))}: finish the current order first`); return; }
   U.view = 'register';

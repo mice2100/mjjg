@@ -508,3 +508,5 @@ body.osk-open .fanwrap{display:none}
 .osk-numpad .osk-key{max-width:none;min-height:52px;font-size:24px}
 .osk-side{display:flex;width:140px}
 .osk-side .osk-done{max-width:none;flex:1}
+.chips.slots{max-height:132px;overflow:auto}
+.chips.slots .chip{min-width:118px;text-align:center}

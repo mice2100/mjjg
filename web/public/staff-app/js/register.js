@@ -54,7 +54,7 @@ function viewTables() {
       ${closed.length ? `<h3 class="osub">Recently closed</h3><div class="ogrid">${closed.map(orderCard).join('')}</div>` : ''}
     </div>
     <aside class="panel regdetail" aria-label="Order details">${sel ? detailPanel(sel) : '<div class="empty" style="margin:auto"><b>No order selected</b><span>Tap an order on the left to see it here.</span></div>'}</aside>
-  </div>${fanHtml()}`;
+  </div>${can.order ? fanHtml() : ''}`;
 }
 
 function floorHtml() {
@@ -135,14 +135,14 @@ function orderDetail(o, inPanel) {
   const open = o.status === 'pending', btns = [];
   const done = o.delivery_type === 'delivery' ? 'Out for delivery' : o.delivery_type === 'dinein' ? 'Close check' : 'Picked up';
   if (open) {
-    btns.push(`<button class="btn danger ghost" data-act="askCancel" data-id="${esc(o.id)}">Cancel order</button><span style="flex:1"></span>`);
+    btns.push(`<button class="btn danger ghost" data-act="askCancel" data-id="${esc(o.id)}">Cancel order</button>${printButtons(o.id)}<span style="flex:1"></span>`);
     if (!isPos(o) && !o.received_at) btns.push(`<button class="btn accent" data-act="received" data-id="${esc(o.id)}">Received</button>`);
-    if (isPos(o)) btns.push(`<button class="btn" data-act="open" data-id="${esc(o.id)}">Edit order</button>`);
-    if (o.balance > 0 && o.payment_status === 'in_store' && isPos(o)) btns.push(`<button class="btn accent" data-act="payOrder" data-id="${esc(o.id)}">Take payment · ${$m(o.balance)}</button>`);
+    if (isPos(o) && can.order) btns.push(`<button class="btn" data-act="open" data-id="${esc(o.id)}">Edit order</button>`);
+    if (o.balance > 0 && o.payment_status === 'in_store' && isPos(o) && can.pay) btns.push(`<button class="btn accent" data-act="payOrder" data-id="${esc(o.id)}">Take payment · ${$m(o.balance)}</button>`);
     else btns.push(`<button class="btn accent" data-act="complete" data-id="${esc(o.id)}">${o.balance > 0 ? `Collected ${$m(o.balance)} · ${done}` : done}</button>`);
   } else {
     btns.push(`<button class="btn" data-act="reopen" data-id="${esc(o.id)}">Reopen</button><span style="flex:1"></span>`);
-    btns.push(`<button class="btn" data-act="print">Print</button><button class="btn accent" data-act="${inPanel ? 'unsel' : 'close'}">Close</button>`);
+    btns.push(`${printButtons(o.id)}<button class="btn accent" data-act="${inPanel ? 'unsel' : 'close'}">Close</button>`);
   }
   const ps = payState(o);
   const sub = `${esc(o.source)} · ${open ? 'Open · ' + mins(o.created_at) + ' min' : o.status === 'cancelled' ? 'Cancelled' : 'Closed ' + fmtTime(o.closed_at || o.updated_at)}`;
@@ -237,7 +237,7 @@ async function takePayment(amountCents, method, label, extra = {}) {
   try {
     const o = S.orders.find((x) => x.id === P.id);
     const close = !P.advance && amountCents >= cents(o.balance);
-    const r = await api('POST', `/api/staff/orders/${encodeURIComponent(P.id)}/payments`,
+    const r = await api('POST', `${API}/orders/${encodeURIComponent(P.id)}/payments`,
       { method, amount: amountCents / 100, label, close, tendered: extra.tendered != null ? extra.tendered / 100 : null });
     upsertOrder(r.order);
     if (U.draft && U.draft.id === r.order.id) U.draft = r.order.status === 'pending' ? draftFromOrder(r.order) : null;
@@ -261,12 +261,12 @@ function receiptModal() {
   const o = S.orders.find((x) => x.id === U.viewId);
   if (!o) return sheet('Receipt', '', '', '');
   return sheet(o.status === 'pending' ? 'Paid in advance' : 'Paid in full', esc(o.id), receiptHtml(o),
-    `<button class="btn" data-act="print">Print</button><button class="btn" data-act="close">Close</button><button class="btn accent" data-act="afterPay">${o.delivery_type === 'dinein' ? 'Back to tables' : 'Start new order'}</button>`);
+    `${printButtons(o.id)}<button class="btn" data-act="close">Close</button><button class="btn accent" data-act="afterPay">${o.delivery_type === 'dinein' ? 'Back to tables' : 'Start new order'}</button>`);
 }
 
 async function setStatus(id, status) {
   try {
-    const r = await api('PATCH', `/api/staff/orders/${encodeURIComponent(id)}`, { status });
+    const r = await api('PATCH', `${API}/orders/${encodeURIComponent(id)}`, { status });
     upsertOrder(r.order);
     if (U.draft && U.draft.id === id && status !== 'pending') U.draft = null;
     toast(`${orderNo(r.order)} ${status === 'pending' ? 'reopened' : status}`);

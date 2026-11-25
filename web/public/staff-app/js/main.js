@@ -18,7 +18,8 @@ function restoreFocus(f) {
 function render() {
   const open = S.orders.filter((o) => o.status === 'pending').length;
   const kds = S.loaded ? openTicketCount() : 0;
-  $('tabs').innerHTML = [['register', 'Order'], ['tables', 'Register', open], ['kds', 'Kitchen', kds], ['menu', 'Menu']]
+  const TAB = { register: ['register', 'Order'], tables: ['tables', 'Register', open], kds: ['kds', 'Kitchen', kds], menu: ['menu', 'Menu'] };
+  $('tabs').innerHTML = ROLE_VIEWS[ROLE].map((v) => TAB[v]) // each site's own tabs, in its own order
     .map(([v, n, b]) => `<button class="tab ${U.view === v ? 'on' : ''}" data-act="view" data-v="${v}" aria-current="${U.view === v}">${n}${b ? `<span class="badge">${b}</span>` : ''}</button>`).join('');
   // New online orders waiting to be acknowledged (the ringtone plays until "Received").
   const waiting = unreceived();
@@ -62,7 +63,7 @@ function tapItem(id) {
 // ---------- click actions ----------
 const A = {
   close: closeModal,
-  view: async ({ v }) => { U.view = v; U.fan = false; closeModal(); render(); },
+  view: async ({ v }) => { if (!ROLE_VIEWS[ROLE].includes(v)) return; U.view = v; U.fan = false; closeModal(); render(); },
   osk: () => oskToggle(),
   sound: () => {
     // The tap itself unlocks audio; when sound was blocked this button means "enable", not "mute".
@@ -131,6 +132,8 @@ const A = {
   area: ({ c }) => areaCode(c),
   stype: ({ t }) => { U.start.type = t; renderModal(); },
   splace: ({ p }) => { U.start.place = p; renderModal(); },
+  slotDay: ({ i }) => { U.start.slotDay = Number(i); renderModal(); },
+  slot: ({ v }) => { U.start.slot = v; renderModal(); },
   place: ({ p }) => { U.draft.place = p; touch(); render(); },
   pickAddr: ({ i }) => { U.start.addrIdx = Number(i); U.start.type = 'delivery'; renderModal(); },
   hotels: () => { U.start.addrIdx = -1; streetSearch(U.start.hotel ? '' : U.start.street, true); },
@@ -158,7 +161,8 @@ const A = {
   keepOrder: () => { U.confirmCancel = null; renderModal(); render(); },
   cancelOrder: async ({ id }) => { closeModal(); await setStatus(id, 'cancelled'); },
   reopen: async ({ id }) => { closeModal(); await setStatus(id, 'pending'); },
-  print: () => window.print(),
+  print: ({ id }) => printReceipt(id || U.viewId || U.sel),
+  paper: () => { toggleReceiptMm(); render(); if (U.modal) renderModal(); },
   // payment
   pmode: ({ m }) => { U.pay.mode = m; renderModal(); },
   pmeth: ({ m }) => { U.pay.method = m; renderModal(); },
@@ -188,7 +192,7 @@ const A = {
   sendFromPay: async () => {
     const id = U.pay.id;
     try {
-      const r = await api('PUT', `/api/staff/orders/${encodeURIComponent(id)}`, { send: true });
+      const r = await api('PUT', `${API}/orders/${encodeURIComponent(id)}`, { send: true });
       upsertOrder(r.order);
       if (U.draft && U.draft.id === id) U.draft = draftFromOrder(r.order);
       toast('Sent to kitchen');
@@ -205,7 +209,7 @@ const A = {
   // kitchen
   received: async ({ id }) => {
     try {
-      const r = await api('PATCH', `/api/staff/orders/${encodeURIComponent(id)}`, { received: true });
+      const r = await api('PATCH', `${API}/orders/${encodeURIComponent(id)}`, { received: true });
       upsertOrder(r.order);
       toast(`${orderNo(r.order)} received`);
     } catch (e) { toast('Not saved: ' + e.message); }
@@ -321,13 +325,14 @@ window.addEventListener('beforeunload', (e) => {
 
 // ---------- start-up ----------
 async function loadReference() {
-  const [menu, streets, search, address, settings, combos] = await Promise.all([
+  const [menu, streets, search, address, slots, settings, combos] = await Promise.all([
     fetch('/api/menu').then((r) => r.json()),
     fetch('/api/streets', { cache: 'no-cache' }).then((r) => r.json()), // the lists change; do not use an old copy
     import('/js/search.js'),
     import('/js/address.js'),
-    api('GET', '/api/staff/menu'),
-    api('GET', '/api/staff/combos'),
+    import('/js/slots.js'),
+    api('GET', `${API}/menu`),
+    api('GET', `${API}/combos`),
   ]);
   S.menu = menu.menu || [];
   S.byId = new Map(S.menu.map((i) => [i.id, i]));
@@ -341,6 +346,7 @@ async function loadReference() {
   S.hotels = streets.hotels || [];
   S.search = search;
   S.address = address;
+  S.slots = slots;
   S.buildings = streets.apartment_buildings || [];
   S.groups = settings.groups;
   S.sold = new Set(settings.sold_out);
@@ -350,6 +356,8 @@ async function loadReference() {
 }
 
 async function init() {
+  document.querySelector('.brand small').textContent = ROLE_TITLE[ROLE];
+  document.title = 'Jade Garden ' + ROLE_TITLE[ROLE];
   tick();
   setInterval(tick, 15000);
   setInterval(() => { if (!U.modal) render(); }, 60000); // minute counters
@@ -367,6 +375,7 @@ async function init() {
   }
   render();
   handleCallHash();
+  if (!can.orders) return; // the admin site only edits menu settings
   await refresh({ full: true });
   setInterval(() => refresh(), POLL_MS);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { unlockAudio(); refresh(); } });

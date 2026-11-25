@@ -3,8 +3,16 @@
 // sold-out dishes. Prices shown here are estimates; every save returns the server's numbers.
 'use strict';
 
-const APP_MODE = location.pathname.startsWith('/staff/pos') ? 'pos'
-  : location.pathname.startsWith('/staff/kitchen') ? 'kitchen' : 'all';
+// Three sites, one app: the address decides the role, and each role has its own Cloudflare
+// Access sign-in and API (worker/auth/staff.js):
+//   /pos/     phone & counter orders, dine-in, payments   → /api/pos/*
+//   /staff/   kitchen display (and the order list)         → /api/kitchen/*
+//   /jadmin/  menu settings: options, sold out, combos     → /api/admin/*
+const ROLE = location.pathname.startsWith('/pos') ? 'pos' : location.pathname.startsWith('/jadmin') ? 'admin' : 'kitchen';
+const API = `/api/${ROLE}`;
+const ROLE_VIEWS = { pos: ['register', 'tables', 'menu'], kitchen: ['kds', 'tables', 'menu'], admin: ['menu'] };
+const ROLE_TITLE = { pos: 'POS', kitchen: 'Kitchen', admin: 'Admin' };
+const can = { order: ROLE === 'pos', pay: ROLE === 'pos', bump: ROLE === 'kitchen', orders: ROLE !== 'admin' };
 
 const TAX_PERCENT = 11; // Saskatchewan GST 5% + PST 6% (worker/lib/util.js)
 const TAX_NAME = 'GST + PST 11%';
@@ -101,7 +109,7 @@ const S = {
   orders: [], tickets: [], loaded: false,
 };
 const U = {
-  view: APP_MODE === 'kitchen' ? 'kds' : 'register', cat: null, q: '', ocat: 'all',
+  view: ROLE_VIEWS[ROLE][0], cat: null, q: '', ocat: 'all',
   modal: null, draft: null, fan: false, panelMin: false,
 };
 const MINE = new Set(); // orders created on this device (no ringtone for them)
@@ -178,7 +186,7 @@ async function refresh({ full = false } = {}) {
   try {
     const delta = !full && lastServerTime && Date.now() - lastFull < FULL_REFRESH_MS;
     const since = delta ? new Date(Date.parse(lastServerTime) - POLL_OVERLAP_MS).toISOString() : null;
-    const data = await api('GET', '/api/staff/orders' + (since ? '?since=' + encodeURIComponent(since) : ''));
+    const data = await api('GET', `${API}/orders` + (since ? '?since=' + encodeURIComponent(since) : ''));
     if (delta && (data.orders.length >= 500 || data.tickets.length >= 500)) return refresh({ full: true });
     const cutoff = new Date(Date.now() - HISTORY_DAYS * 86400000).toISOString();
     const tcut = new Date(Date.now() - 12 * 3600000).toISOString();
@@ -214,18 +222,19 @@ async function refresh({ full = false } = {}) {
 function setSync() {
   const el = $('sync');
   if (!el) return;
+  if (!can.orders) { el.textContent = ''; return; } // the admin site does not follow orders
   el.className = 'sync' + (syncFailed ? ' bad' : '');
   el.textContent = syncFailed ? 'Offline' : lastServerTime ? 'Synced ' + fmtTime(lastServerTime) : 'Connecting…';
 }
 
 // ---------- sound ----------
-// The restaurant's ringtone (/staff/ringtone.mp3). It loops while any website or WordPress
+// The restaurant's ringtone (/staff-app/ringtone.mp3). It loops while any website or WordPress
 // order is waiting for someone to tap "Received" (on any screen), and plays a few seconds
 // for kitchen tickets sent from another iPad. Browsers block sound until the first tap.
 const sound = { on: localStorage.getItem('jg_sound_enabled') !== 'false', audio: null, blocked: false, briefUntil: 0 };
 function ringAudio() {
   if (!sound.audio) {
-    sound.audio = new Audio('/staff/ringtone.mp3');
+    sound.audio = new Audio('/staff-app/ringtone.mp3');
     sound.audio.loop = true;
     sound.audio.preload = 'auto';
   }

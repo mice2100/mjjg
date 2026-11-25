@@ -1,8 +1,12 @@
 # Old URLs from the prototype and WordPress site
-/pos.html                 /staff/  301
+/pos.html                 /pos/    301
 /kitchen.html             /staff/  301
 /jade-garden-order.html   /staff/  301
 /orders                   /staff/  301
+/staff/pos                /pos/    301
+/staff/pos/               /pos/    301
+/staff/kitchen            /staff/  301
+/staff/kitchen/           /staff/  301
 /website/index.html       /        301
 /website/order.html       /order/  301
 /online-order             /order/  301

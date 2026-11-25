@@ -13,10 +13,11 @@
 | Area | URL | Users | Status |
 |---|---|---|---|
 | Customer website + online ordering | `/`, `/order/`, `/gallery/`, `/privacy/` | Public | Built with the restaurant's own photos; needs owner review and auth/Turnstile keys |
-| Staff app: POS (phone, walk-in, dine-in tables), register & payments, kitchen display, menu settings | `/staff/` (`/staff/pos/` opens on Order, `/staff/kitchen/` on Kitchen) | Staff (Cloudflare Access) | Rebuilt 2026-11 on the owner's template design; tested locally, not deployed yet |
-| Previous staff app (fallback) | `/staff/classic/` | Staff (Cloudflare Access) | Unchanged; still works against the same API |
+| Phone & counter orders, dine-in tables, register & payments (POS) | `/pos/` | POS staff + admins (Cloudflare Access) | Rebuilt 2026-11 on the owner's template design; tested locally, not deployed yet |
+| Kitchen display (tickets, online orders, ringtone + Received) | `/staff/` | Kitchen staff + admins (Cloudflare Access) | Rebuilt 2026-11; tested locally, not deployed yet |
+| Administration (item options, sold out, combo contents) | `/jadmin/` | Admins only (Cloudflare Access) | Rebuilt 2026-11. Old `/staff/pos/` and `/staff/kitchen/` redirect |
 | Order API, customer accounts, coupons | `/api/*` | Website + staff app | Working, unit + e2e tested locally |
-| WooCommerce → D1 order import | cron + webhook | Background | Working; delete after cutover |
+| WooCommerce → D1 order import | cron (webhook optional) | Background | Working; all 1042 historic orders imported 2026-11-19; delete after cutover |
 
 **Current phase:** the old WordPress site still takes online orders. The Worker imports them into D1 so the kitchen sees **all** orders in one place. After the owner approves the new site, DNS for `mjjadegarden.com` moves to the Worker and WordPress is shut down (see §11).
 
@@ -30,8 +31,8 @@
 4. **No secrets in git.** Use `wrangler secret put` (prod) and `.dev.vars` (local). `.env` is only for `tools/*.py`. A WooCommerce key was committed in the past and **must be rotated** (see §12).
 5. **Menu item `id`s in `data/menu.json` are permanent.** Carts, coupons (`free_item_id`) and `FEATURED_ITEM_IDS` reference them. Add new dishes with new ids. Never renumber. Retire a dish by removing it (old orders keep their own copy of name and price).
 6. **Schema changes = a new file in `migrations/`** (`0002_….sql`). Never edit an applied migration. Never create or alter tables at runtime.
-7. **Staff-only endpoints live under `/api/staff/*`** and are registered with `{ staff: true }` in `worker/index.js`. They are protected by Cloudflare Access plus JWT verification (`worker/auth/staff.js`), which fails closed.
-8. **Escape customer text in the staff app.** It renders with `innerHTML`. In `web/public/staff/js/*`, every server string goes through `esc()` where it is rendered; events use `data-act` / `data-input` delegation, so there are no inline `onclick` handlers. (The classic app escapes with `sanitizeOrder()` on entry.)
+7. **Staff-only endpoints are split by role**: `/api/kitchen/*` (page `/staff/`), `/api/pos/*` (page `/pos/`) and `/api/admin/*` (page `/jadmin/`). Each is registered with `{ staff: '<role>' }` in `worker/index.js` and protected by its **own Cloudflare Access application** plus JWT verification against that role's AUD (`worker/auth/staff.js`), which fails closed. Who may use a role is set in the Cloudflare dashboard (§10), never in the repo. A new staff endpoint must pick exactly one role.
+8. **Escape customer text in the staff app.** It renders with `innerHTML`. In `web/public/staff-app/js/*`, every server string goes through `esc()` where it is rendered; events use `data-act` / `data-input` delegation, so there are no inline `onclick` handlers.
 9. **Times:** store UTC ISO strings. Business logic (coupon days and hours, display) uses `America/Regina` (Saskatchewan, CST all year, no DST). Helpers are in `worker/lib/util.js`.
 10. **Keep the site launchable without promotions.** Every promotion slot must render nothing when it is empty (see §7).
 11. **Photos: publish only the restaurant's own images, as WebP.** Never publish stock photos, images copied from other sites, AI-generated food art, or photos showing identifiable customers (that needs their consent). Use one large and one `-sm` size (see §4a).
@@ -45,8 +46,8 @@
                          │                                  │
                          ▼                                  ▼
         ┌──────────────────────── Cloudflare (one Worker: "jadegarden") ───────────────────────┐
-        │  Static assets (web/dist, built by Astro)     Cloudflare Access protects /staff/*    │
-        │    /  /order/  /privacy/  /staff/               and /api/staff/*                     │
+        │  Static assets (web/dist, built by Astro)     Access: /staff /pos /jadmin and      │
+        │    /  /order/  /privacy/  /staff/ /pos/ /jadmin/  /api/{kitchen,pos,admin}/*         │
         │                                                                                      │
         │  worker/index.js  fetch()  → /api/*  (run_worker_first)                              │
         │      public:  config, menu, streets, quote, orders, auth/*, me                       │
@@ -65,7 +66,7 @@
 - **One Worker instead of Pages + Functions.** Workers support static assets, cron triggers and webhooks in a single deployable. WooCommerce syncing became a background job (cron + webhook), so the **kitchen screen only reads D1** and never calls WooCommerce. Before this change, every kitchen poll from every screen hit WooCommerce, and nothing synced while no screen was open.
 - **Astro (static output) for the customer site.** Pages are pre-rendered (fast, SEO-friendly, the full menu is indexable). Components and a typed content collection make promotions safe for agents to edit. There is no SSR adapter and no client framework; small vanilla scripts handle the cart and sign-in.
 - **Shared code between the site and the staff app** lives in `web/src/lib/` as dependency-free ES modules. The site imports it normally; the staff app loads it with `import('/js/…')` through a tiny endpoint in `src/pages/js/`. Change search behaviour only in `src/lib/search.js`; both apps follow. Do not paste copies into `staff/index.html`.
-- **The staff app is vanilla HTML/CSS/JS with no build step** (`web/public/staff/index.html`, `staff.css`, `js/*.js`), copied as-is by Astro. It was rebuilt in 2026-11 on the owner's template design (top tabs Order · Register · Kitchen · Menu, brand green). The scripts share one global scope and load in order: `core.js` (state, API, polling, sound, money mirror) → `keyboard.js` (on-screen keyboard: on touch screens every text field gets `inputmode="none"` so the tablet keyboard stays hidden, and a docked keyboard / number pad types into it; the header "Keyboard" button switches back to the tablet keyboard, remembered per device) → `order.js` (order screen + item picker) → `start.js` (phone keypad, customer lookup, address autocomplete, seat picker) → `register.js` (open orders, floor plan, payments, receipts) → `kitchen.js` → `menu.js` → `main.js` (render + event wiring). The previous single-file app is kept at `web/public/staff/classic/index.html` as a fallback.
+- **The staff app is vanilla HTML/CSS/JS with no build step** (`web/public/staff/index.html`, served at `/staff/`, `/pos/` and `/jadmin/`; code in `web/public/staff-app/`: `staff.css`, `js/*.js`), copied as-is by Astro. It was rebuilt in 2026-11 on the owner's template design (brand green) and merged with mice2100's split into three Access-protected sites: the path sets `ROLE` (`core.js`), which picks the API (`/api/<role>/*`) and the tabs: `/pos/` Order · Register · Menu, `/staff/` Kitchen · Register · Menu, `/jadmin/` Menu (option and combo editing only work there). The scripts share one global scope and load in order: `core.js` (state, API, polling, sound, money mirror) → `keyboard.js` (on-screen keyboard: on touch screens every text field gets `inputmode="none"` so the tablet keyboard stays hidden, and a docked keyboard / number pad types into it; the header "Keyboard" button switches back to the tablet keyboard, remembered per device) → `order.js` (order screen + item picker) → `start.js` (phone keypad, customer lookup, address autocomplete, seat picker) → `register.js` (open orders, floor plan, payments, receipts) → `print.js` (thermal receipt, 80 / 58 mm, printed through a hidden frame) → `kitchen.js` → `menu.js` → `main.js` (render + event wiring). Pickup / delivery time slots come from `web/src/lib/slots.js` (published at `/js/slots.js`).
 - **Online payment = Clover Hosted Checkout.** The customer pays on Clover's page, so card data never touches our code (no PCI scope). The whole order goes to Clover as one line item for the exact server total, and Clover's own tip screen stays off. An order becomes paid only on Clover's word: the signed webhook, or, if that is lost, Clover's own payments API (`reconcileCloverPayments`, matched by the line item name `Jade Garden order <id>` and the exact total). The browser never asserts payment; its status polls and the cron just trigger that server-side check.
 - **D1 holds only one promotion primitive: coupons.** The marketing strategy is not decided, so there are no flash-sale, weekly-special or loyalty tables until a real campaign needs them.
 
@@ -100,9 +101,9 @@ worker/
   routes/     public.js, account.js, staff.js, webhooks.js
 web/                      ← Astro project (npm run build → web/dist)
   astro.config.mjs
-  public/staff/           ← staff app: index.html + staff.css + js/*.js (see §3); APP_MODE from the path picks the first tab
-  public/staff/classic/   ← the previous single-file staff app (fallback)
-  src/pages/staff/[app]/  ← republishes that same file at /staff/pos/ and /staff/kitchen/
+  public/staff/index.html ← staff app page; the same file is served at /staff/ (kitchen), /pos/ and /jadmin/, and the path picks the role (ROLE in js/core.js)
+  public/staff-app/       ← its code, styles and ringtone (outside the Access apps; no data): staff.css, js/*.js (see §3), ringtone.mp3 (git-ignored, deployed from the owner's machine)
+  src/pages/pos/, src/pages/jadmin/ ← republish that same page at /pos/ and /jadmin/
   public/_redirects       ← old URLs (/pos.html, /kitchen.html, /website/*) → new ones
   public/images/menu/     ← <menuId>.webp (1200px) + <menuId>-sm.webp (480px) dish photos
   public/images/site/     ← <slug>.webp (1800px) + <slug>-sm.webp (640px) hero, story, gallery photos
@@ -149,18 +150,18 @@ All bodies are JSON. POST/PATCH **require** `Content-Type: application/json`, wh
 | POST | `/api/auth/logout` | – | Clears the session cookie |
 | GET / PATCH | `/api/me` | session | Read or update name, phone, default_address, marketing_opt_in |
 | GET | `/api/availability` | – | `{sold_out:[menu id]}`; the order page greys these out (30 s cache) |
-| GET | `/api/staff/orders` | staff | All pending orders plus the last 7 days, staff shape (dollars, `time` in local time, `payments`, `paid`, `balance`, `table_id`, POS line fields `uid/sent/mods/note/disc`), plus `tickets` (open + last 12 h) and `sold_out`. `?since=<iso>` returns only orders and tickets changed after that time (max 500 each); the app polls this way and reloads fully every 10 minutes |
-| POST | `/api/staff/orders` | staff | POS order: `{delivery_type:'dinein'\|'pickup'\|'delivery', source, table_id?, customer_*, discount?:{t:'pct'\|'amt',v}, lines:[{uid,id,qty,mods:[{g,n}],note,disc?}], send?}` → `ORD-####`. Dine-in needs nothing, pickup a name or phone, delivery a phone + address. `send:true` also makes a kitchen ticket. The older `{items:[{id,qty}]}` body (classic app) still works |
-| PUT | `/api/staff/orders/:id` | staff | Change an open POS order (same fields, all optional). The server reprices, keeps each line's `sent` count by `uid`, and queues voids for sent items that were removed. `send:true` sends every change as one ticket. Refused if the new total is below what was already paid |
-| PATCH | `/api/staff/orders/:id` | staff | `{status:'pending'\|'completed'\|'cancelled'}`. Completing or cancelling also clears its open kitchen tickets; reopening a dine-in check fails if its table is taken |
-| POST | `/api/staff/orders/:id/payments` | staff | In-store payment `{method:'cash'\|'card', amount, tendered?, label?, close?}` (dollars). Never more than the balance; `close:true` completes the order when it reaches $0 |
-| PATCH | `/api/staff/tickets/:id` | staff | `{done:true\|false}` bump or recall a kitchen ticket |
-| GET | `/api/staff/menu` | staff | `{groups (option groups), sold_out, can_edit}` |
-| PUT | `/api/staff/menu/:id/availability` | staff | `{sold_out:true\|false}` for one menu id |
-| PUT / DELETE | `/api/staff/options/:id` | staff admin | Create (`:id` = `new`), edit or delete an option group `{name, min:0\|1, max, options:[{name,price_cents}], item_ids}` |
-| GET | `/api/staff/customers/lookup?phone=` | staff | POS phone lookup: `{found, name, email, notes, addresses[] (most recent first), last_delivery_type, stats, orders[]}` (staff order shape, every channel). Index seeks only: customers by phone → their orders, `customer_addresses`, stored stats |
-| GET | `/api/staff/combos` | staff | `{combos:[{combo_id, components:[{id,code,name,qty}]}], can_edit}` |
-| PUT | `/api/staff/combos/:id` | staff admin | `{components:[{id,qty}\|{name,qty}]}` replaces what combo `:id` contains; `[]` clears it |
+| GET | `/api/kitchen/orders` · `/api/pos/orders` | kitchen, pos | All pending orders plus the last 7 days, staff shape (dollars, `time` in local time, `payments`, `paid`, `balance`, `table_id`, POS line fields `uid/sent/mods/note/disc`), plus `tickets` (open + last 12 h) and `sold_out`. `?since=<iso>` returns only orders and tickets changed after that time (max 500 each); the app polls this way and reloads fully every 10 minutes |
+| POST | `/api/pos/orders` | pos | POS order: `{delivery_type:'dinein'\|'pickup'\|'delivery', source, table_id?, customer_*, discount?:{t:'pct'\|'amt',v}, lines:[{uid,id,qty,mods:[{g,n}],note,disc?}], send?}` → `ORD-####`. Dine-in needs nothing, pickup a name or phone, delivery a phone + address. `send:true` also makes a kitchen ticket. The older `{items:[{id,qty}]}` body still works |
+| PUT | `/api/pos/orders/:id` | pos | Change an open POS order (same fields, all optional). The server reprices, keeps each line's `sent` count by `uid`, and queues voids for sent items that were removed. `send:true` sends every change as one ticket. Refused if the new total is below what was already paid |
+| PATCH | `/api/kitchen/orders/:id` · `/api/pos/orders/:id` | kitchen, pos | `{received:true}` acknowledges a new online order (stops the ringtone), or `{status:'pending'\|'completed'\|'cancelled'}`. Completing or cancelling also clears its open kitchen tickets; reopening a dine-in check fails if its table is taken |
+| POST | `/api/pos/orders/:id/payments` | pos | In-store payment `{method:'cash'\|'card', amount, tendered?, label?, close?}` (dollars). Never more than the balance; `close:true` completes the order when it reaches $0 |
+| PATCH | `/api/kitchen/tickets/:id` | kitchen | `{done:true\|false}` bump or recall a kitchen ticket |
+| GET | `/api/<role>/menu` | kitchen, pos, admin | `{groups (option groups), sold_out, can_edit}` |
+| PUT | `/api/<role>/menu/:id/availability` | kitchen, pos, admin | `{sold_out:true\|false}` for one menu id |
+| PUT / DELETE | `/api/admin/options/:id` | admin | Create (`:id` = `new`), edit or delete an option group `{name, min:0\|1, max, options:[{name,price_cents}], item_ids}` |
+| GET | `/api/pos/customers/lookup?phone=` | pos | POS phone lookup: `{found, name, email, notes, addresses[] (most recent first), last_delivery_type, stats, orders[]}` (staff order shape, every channel). Index seeks only: customers by phone → their orders, `customer_addresses`, stored stats |
+| GET | `/api/<role>/combos` | kitchen, pos, admin | `{combos:[{combo_id, components:[{id,code,name,qty}]}], can_edit}` (`can_edit` only for admin) |
+| PUT | `/api/admin/combos/:id` | admin | `{components:[{id,qty}\|{name,qty}]}` replaces what combo `:id` contains; `[]` clears it |
 | POST | `/api/webhooks/woocommerce` | HMAC (`WC_WEBHOOK_SECRET`) | WooCommerce "Order created/updated" webhook |
 | POST | `/api/webhooks/clover` | `Clover-Signature` HMAC (`CLOVER_WEBHOOK_SECRET`) | Clover Hosted Checkout payment webhook. `APPROVED` → order paid |
 
@@ -201,13 +202,15 @@ Progressive profiling:
 
 ### 6a. Staff POS new-order flow
 
-The **+** button (Order and Register tabs) offers Dine in (pick a free table on the seat picker or the Register → Dine-in floor plan), Pick Up and Delivery. Pick Up and Delivery open the **phone step** below; a walk-in pickup can skip the phone and give a name. Tapping a dish adds it at once unless it has a required option group; tapping a line opens options, note, quantity and line discount. **Send to kitchen** saves the order and makes a ticket of what changed; the "−" button puts the order aside (saved, not sent) so another can be taken. Register lists every open order (POS, website, WordPress shown as `#<WordPress number>`), with payment: pay in full, split evenly, split by item, or custom amounts, by cash (change due) or card, and a printable receipt.
+On `/pos/`, the **+** button (Order and Register tabs) offers Dine in (pick a free table on the seat picker or the Register → Dine-in floor plan), Pick Up and Delivery. Pick Up and Delivery open the **phone step** below; a walk-in pickup can skip the phone and give a name. Tapping a dish adds it at once unless it has a required option group; tapping a line opens options, note, quantity and line discount. **Send to kitchen** saves the order and makes a ticket of what changed; the "−" button puts the order aside (saved, not sent) so another can be taken. Register lists every open order (POS, website, WordPress shown as `#<WordPress number>`), with payment: pay in full, split evenly, split by item, or custom amounts, by cash (change due) or card, and a printable receipt.
 
-The **phone step**: an on-screen keypad (`inputmode="none"`, so the iPad keyboard stays hidden; a physical keyboard still works). At 10 digits the app calls `/api/staff/customers/lookup`, fills the name, preselects pickup/delivery from the last order and the most recent address, and lists the order history. **Reorder** copies an old order into the cart (matched to today's menu by id, then code, then name; prices are today's; free coupon items are skipped). A saved address is sent exactly as stored; "New address" falls back to the street autocomplete. That autocomplete also offers hotels (typing a name, or the 🏨 Hotels button lists them all); a hotel address needs a room number and is stored as `<Hotel>, <street>, Room <n>, Moose Jaw, SK`.
+The **phone step**: an on-screen keypad (`inputmode="none"`, so the iPad keyboard stays hidden; a physical keyboard still works). At 10 digits the app calls `/api/pos/customers/lookup`, fills the name, preselects pickup/delivery from the last order and the most recent address, and lists the order history. **Reorder** copies an old order into the cart (matched to today's menu by id, then code, then name; prices are today's; free coupon items are skipped). A saved address is sent exactly as stored; "New address" falls back to the street autocomplete. That autocomplete also offers hotels (typing a name, or the 🏨 Hotels button lists them all); a hotel address needs a room number and is stored as `<Hotel>, <street>, Room <n>, Moose Jaw, SK`.
 
-**Caller ID hook:** opening `/staff/#call=3065551234` (or calling `startOrderForPhone()`) starts this lookup. An order already in progress is never replaced. The store has a landline, so the planned bridge is a USB caller-ID modem on the counter PC that opens that URL (backlog).
+**Time:** the confirm window has one time picker for pickup and delivery: **ASAP** (today only) or a 30-minute slot, with day buttons for the next open days. Slots start at the next half hour after now and stay inside take-out hours (11:00–20:00, closed Mondays). The logic is `web/src/lib/slots.js` (shared like `search.js`, published at `/js/slots.js`, tested in `slots.test.js`); if the hours change, change them there and in `site.js`. The chosen text is stored as-is in `orders.delivery_time_slot`; a later day is stored as `Fri Nov 20 · 6:30 – 7:00 PM`.
 
-Combo editing is limited to `ADMIN_EMAILS` (comma-separated Access emails, `wrangler.jsonc` var); when it is empty, every staff member can edit.
+**Caller ID hook:** opening `/pos/#call=3065551234` (or calling `startOrderForPhone()`) starts this lookup. An order already in progress is never replaced. The store has a landline, so the planned bridge is a USB caller-ID modem on the counter PC that opens that URL (backlog).
+
+Combo editing lives only on `/jadmin/` (admin role). The kitchen and POS screens only display what a combo contains.
 
 ## 7. Promotions & coupons playbook
 
@@ -268,7 +271,7 @@ VALUES ('SNOWDAY', 'Free delivery on snow days', 'free_delivery', 0, NULL, 2500,
 - Tips (website): No tip (default), 5%, 10%, 15% of food after discount (before tax and delivery), or "Round up", which tops the total up to the next whole dollar ($0 if already whole). The client sends only the choice; `tipCents()` in `pricing.js` computes the amount.
 - Delivery anywhere in Moose Jaw: **$7 to a house, $8 to an apartment, condo or hotel** (`DELIVERY_FEES_CENTS` in `worker/lib/util.js`). Pickup and dine-in are free. Which one is decided from the address by `web/src/lib/address.js` (shared by the Worker, the order page and the staff app): a unit / apt / suite / room / `#` number, a hotel from `data/moose_jaw_hotels.json`, or a building in `data/moose_jaw_apartment_buildings.json` (owner adds buildings whose customers often leave out the unit) means apartment; anything else is a house. The website cannot choose; staff can override it on the order (House / Apartment chips).
 - Payment: web orders are **paid online by card through Clover before the kitchen sees them**. No money is collected at the door. The staff app shows "Paid online — do not collect" or "Collect $X". POS phone and walk-in orders are still paid in store.
-- New online orders (website and WordPress) loop the ringtone `web/public/staff/ringtone.mp3` on every staff screen, with an orange banner, until someone taps **Received** (`PATCH /api/staff/orders/:id {received:true}` → `orders.received_at`, migration 0007). Kitchen tickets sent from another iPad play it for a few seconds.
+- New online orders (website and WordPress) loop the ringtone `web/public/staff-app/ringtone.mp3` (the owner's file; git-ignored, so deploy from a machine that has it) on every staff screen, with an orange banner, until someone taps **Received** (`PATCH /api/<kitchen|pos>/orders/:id {received:true}` → `orders.received_at`, migration 0007). Kitchen tickets sent from another iPad play it for a few seconds.
 - Set dinners are split into `Dinner for One` and `Family Dinners` (data/menu.json categories). Extra people (option groups, migration 0007): Platter for Three or More and Dinner for Six +$15.95 per person, Dinner for Eight +$16.37 per person. Website ordering does not offer options yet.
 - Order ids: `WEB-####` (website), `ORD-####` (POS phone, walk-in or dine-in), `WC-<wooId>` (imported from WordPress; the staff app shows it as `#<wooId>`, the number staff see in WordPress).
 - Kitchen status: `pending → completed` (or `cancelled`). A WooCommerce re-sync never moves a kitchen-completed order back to pending. A WooCommerce cancellation always wins.
@@ -289,27 +292,27 @@ npm run cron:local                      # run the cron handler once against wran
 ```
 `wrangler dev` serves the `web/dist` it found at startup. After `npm run build`, restart it.
 
-**Before you finish a change:** `npm test`, `npm run build`, and a smoke test of `/`, `/order/` (place an order) and `/staff/` (see it arrive, mark it completed).
+**Before you finish a change:** `npm test`, `npm run build`, and a smoke test of `/`, `/order/` (place an order) and `/staff/` (see it arrive, mark it completed) and `/pos/`.
 
-**Deploying = `npm run deploy`** (`scripts/deploy.sh`). It refuses uncommitted changes (`ALLOW_DIRTY=1` overrides), runs the tests, builds, backs up D1 to `backups/` and applies migrations **only when some are pending**, deploys with the git sha as the version tag, then smoke tests the public pages and checks that `/api/staff/orders` is **not** public. `npm run deploy:status` shows versions, secrets and migrations. `npm run deploy:rollback` restores the previous code version only (never D1), so **migrations must be additive**: the old code must still run on the new schema.
+**Deploying = `npm run deploy`** (`scripts/deploy.sh`). It refuses uncommitted changes (`ALLOW_DIRTY=1` overrides), runs the tests, builds, backs up D1 to `backups/` and applies migrations **only when some are pending**, deploys with the git sha as the version tag, then smoke tests the public pages and checks that the staff pages and APIs (`/staff/`, `/pos/`, `/jadmin/`, `/api/kitchen|pos|admin/*`) are **not** public. `npm run deploy:status` shows versions, secrets and migrations. `npm run deploy:rollback` restores the previous code version only (never D1), so **migrations must be additive**: the old code must still run on the new schema.
 
 Credentials: `.deploy.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, optional `DEPLOY_URL`), or `npx wrangler login`. Secrets: `.prod.vars`, sent with every deploy. Empty lines keep the value already in Cloudflare, and names outside the script's `SECRET_NAMES` list are rejected. Both files are git-ignored.
 
 **First production deploy (checklist):**
 1. Fill in `.deploy.env`, then `npm run deploy:setup`. It finds or creates `jadegarden-db`, writes its id into `wrangler.jsonc` (and commits it), generates `SESSION_SECRET` in `.prod.vars`, and deploys. The site is live on `jadegarden.<subdomain>.workers.dev`.
 2. Secrets: fill in `.prod.vars` (`WC_*`, `TURNSTILE_SECRET_KEY`, `CLOVER_*`, and `FACEBOOK_APP_SECRET` if Facebook is used), then `npm run deploy`.
-3. Cloudflare Zero Trust → Access application for `<host>/staff/*` and `<host>/api/staff/*`. Allow staff emails (one-time PIN). Put the team domain and the application AUD in `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`. Until then the staff API refuses every request.
+3. Cloudflare Zero Trust → three Access applications on `<host>`: **Kitchen** (`/staff`, `/api/kitchen`), **POS** (`/pos`, `/api/pos`), **Admin** (`/jadmin`, `/api/admin`). Policies reference Access groups (**Kitchen staff**, **POS staff**, **Admins**): Kitchen allows Kitchen staff + Admins, POS allows POS staff + Admins, Admin allows Admins only. Login method: One-time PIN. Put the team domain in `ACCESS_TEAM_DOMAIN` and each application's AUD in `ACCESS_AUD_KITCHEN` / `ACCESS_AUD_POS` / `ACCESS_AUD_ADMIN`. Until then that role's API refuses every request. Adding or removing a person = edit the group (Zero Trust → Access controls → Access groups), no deploy.
 4. Turnstile widget (hostname = the deploy host) → `TURNSTILE_SITE_KEY` var plus the secret.
 5. Clover: set `CLOVER_MERCHANT_ID` (the 13-character merchant UUID, **not** the numeric processor MID) and `CLOVER_ENV` in `wrangler.jsonc`. In the Clover Merchant Dashboard → Ecommerce → Hosted Checkout, set the webhook URL `https://<host>/api/webhooks/clover`, click Generate, and store the Signing Secret as `CLOVER_WEBHOOK_SECRET`. Keep Clover's own tipping **off**. Test with a real card for $1 worth of food, then refund it in Clover.
-6. WooCommerce → Settings → Advanced → Webhooks: "Order created" and "Order updated" → `https://<host>/api/webhooks/woocommerce`, using the same secret as `WC_WEBHOOK_SECRET`.
+6. WooCommerce webhook (**optional**): the cron already pulls new and changed orders every minute, so the kitchen sees them within about a minute. A webhook only makes that instant: Settings → Advanced → Webhooks, "Order created" and "Order updated" → `https://<host>/api/webhooks/woocommerce`, using the same secret as `WC_WEBHOOK_SECRET`. Skipped for now.
 
-`<host>` is the test host during dual-run: `jg.moosephotoprint.com` (custom domain in `wrangler.jsonc` `routes`; the API token has Workers Routes edit on that zone) and the workers.dev host, which stays on. Both are in the Access application. Clover runs in **sandbox** (`CLOVER_ENV`, test cards only) until cutover. Clover's return URL follows the request's own origin, so the site works on any host. Moving to a new host means updating the Access application, the Turnstile hostnames and both webhook URLs.
+`<host>` is `w2.mjjadegarden.com` during dual-run (custom domain in `wrangler.jsonc` `routes`). `workers_dev` and preview URLs are **off**: Access cannot protect workers.dev, so w2 is the only public host. Access uses the one-time PIN identity provider; users are managed through the three Access groups. The Cloudflare token lives in the environment as `CF_ACCOUNT_TOKEN` / `CF_ACCOUNT_ID` (mise); `scripts/deploy.sh` maps them to `CLOUDFLARE_*`. Clover runs in **sandbox** (`CLOVER_ENV`, test cards only) until cutover. Clover's return URL follows the request's own origin, so the site works on any host. Moving to a new host means updating the Access application, the Turnstile hostnames and both webhook URLs.
 
 ---
 
 ## 11. Cutover plan
 
-1. **Now (dual-run):** the Worker runs on `jg.moosephotoprint.com` and `jadegarden.<account>.workers.dev`, with Clover in sandbox. Staff use `/staff/`. WordPress keeps taking customer orders, which flow in through the webhook and cron.
+1. **Now (dual-run):** the Worker runs on `w2.mjjadegarden.com`, with Clover in sandbox. Staff use `/staff/` (kitchen) and `/pos/` (phone orders); managers use `/jadmin/`. WordPress keeps taking customer orders, which flow in through the cron (`WC_STORE_URL` is `https://www.mjjadegarden.com`; the apex was rate limited with 429 by Hostinger while proxied). Historic WooCommerce orders were imported once: everything before the import day is `completed`, because the old system never set statuses.
 2. **Owner review:** the owner checks the website copy, hours, menu prices, privacy policy and photos. Place real test orders.
 3. **Cutover:** switch `CLOVER_ENV` to `production` with the live merchant id and keys, then attach the custom domains `mjjadegarden.com` and `www` to the Worker (`routes` in `wrangler.jsonc`). `_redirects` maps the old WordPress URLs.
 4. **After cutover:** remove the WooCommerce part of `scheduled()` (keep the cron: it expires unpaid Clover checkouts), `worker/services/woocommerce.js`, `routes/webhooks.js` and the WC secrets. Then shut down WordPress. Optionally import past WooCommerce customers into `customers` with `marketing_opt_in = 0`.
@@ -324,7 +327,7 @@ Credentials: `.deploy.env` (`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, opt
 4. Order-taking guards: reject web orders outside take-out hours or on Mondays, and add an optional "schedule for later" time.
 5. Refunds: done by hand in the Clover dashboard today. If staff cancel a paid order, they must refund it in Clover (the kitchen "cancel" does not refund).
 6. Customer notifications: order confirmation email, subscriptions and coupon campaigns (plan in `TODO.md`), plus optional SMS when an order is ready.
-7. Caller ID: USB caller-ID modem (landline) on the counter PC + a tiny local script that opens `/staff/#call=<number>` (see §6a).
+7. Caller ID: USB caller-ID modem (landline) on the counter PC + a tiny local script that opens `/pos/#call=<number>` (see §6a).
 8. Kitchen printing: a LAN print bridge to the ESC/POS printer (see `docs/architecture_and_guide.md`).
 9. Passwordless email sign-in (magic link) and a simple `/account/` page with order history.
 10. Move the menu into D1 plus a staff menu editor, only once the owner wants to edit prices without a deploy.

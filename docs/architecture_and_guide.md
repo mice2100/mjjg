@@ -6,17 +6,17 @@ Deep-dive notes that don't belong in AGENTS.md. AGENTS.md wins if they disagree.
 
 ## 1. Staff app (`web/public/staff/index.html`)
 
-A single vanilla HTML/CSS/JS file optimised for an iPad mini (it also works on a PC or the kitchen screen). It loads the menu from `/api/menu` and streets from `/api/streets`, and talks only to `/api/staff/*`.
+A single vanilla HTML/CSS/JS file optimised for an iPad mini (it also works on a PC or the kitchen screen). It loads the menu from `/api/menu` and streets from `/api/streets`, and talks only to its own role's API (`/api/kitchen/*` on `/staff/`, `/api/pos/*` on `/pos/`, `/api/admin/*` on `/jadmin/`).
 
 ### 1.1 Views
 - **Orders dashboard (kitchen board):** the left column lists orders (filter: All / Pending / Completed) with source badges (Web, WooCommerce, Phone, Walk-in) and pickup/delivery badges. The right panel shows the selected order: customer, tap-to-call phone, delivery address card with copy button, time slot, notes, items, bill breakdown (discount, delivery fee, tip, tax, total), *Mark as Completed* and *Print*.
-  - Polls `GET /api/staff/orders` every 15 s. That call only reads D1, so polling is cheap.
+  - Polls `GET /api/kitchen/orders` every 15 s. That call only reads D1, so polling is cheap.
   - Orders not seen before that are `pending` trigger a two-note Web Audio chime and a toast. Sound can be toggled off and tested. Browsers need one tap first to unlock audio.
-  - Status changes go to `PATCH /api/staff/orders/:id`, with an optimistic UI update that reverts if the request fails.
+  - Status changes go to `PATCH /api/kitchen/orders/:id`, with an optimistic UI update that reverts if the request fails.
 - **New order (phone POS), two stages:**
   1. **Menu and cart:** fuzzy search (§2), category tabs, quantity controls.
   2. **Confirm and delivery modal:** source (Phone / Walk-in), name, phone, pickup or delivery, Moose Jaw street autocomplete (§3), apt/suite, time, and notes with frequency-ranked quick tags.
-  - *Submit* → `POST /api/staff/orders` with `{id, qty}` items only. The server prices the order and returns `ORD-####`. If saving fails, the cart is kept and staff can retry.
+  - *Submit* → `POST /api/pos/orders` with `{id, qty}` items only. The server prices the order and returns `ORD-####`. If saving fails, the cart is kept and staff can retry.
 
 ### 1.2 Security notes
 - All customer text is HTML-escaped by `sanitizeOrder()` before any `innerHTML` rendering. Web customers can type anything into name, notes and address fields.
@@ -51,7 +51,8 @@ Typing speed matters on a phone call, so search uses subsequence matching with s
 
 - **Buy:** Epson **TM-T88VI / TM-T88VII** (or Star Micronics **TSP143III LAN**). It **must be the Ethernet/LAN model**.
 - **Why LAN:** the printer gets a fixed IP (e.g. `192.168.1.200`) and can be shared. The SkipTheDishes tablet pairs with it directly, and our system can send raw ESC/POS to port **9100**. The printer queues jobs, so the two never conflict.
-- **Not built yet (backlog):** a small print bridge on the restaurant LAN (Node or Python) that polls `/api/staff/orders` (with an Access service token) and prints new orders. Until then, staff use *Print* in the browser.
+- **Print Receipt (browser):** builds a narrow black-and-white receipt (header, order number, pickup/delivery, customer, address, notes, items with combo contents, totals, PAID ONLINE / COLLECT) and prints it through a hidden frame with `@page { size: 80mm auto; margin: 0 }`. The `80 mm` button next to it switches to 58 mm paper (remembered per device). In the print dialog pick the receipt printer and set Margins to None.
+- **Not built yet (backlog):** a small print bridge on the restaurant LAN (Node or Python) that polls `/api/kitchen/orders` (with an Access service token) and prints new orders. Until then, staff use *Print* in the browser.
 
 ---
 

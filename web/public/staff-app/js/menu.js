@@ -1,6 +1,6 @@
 // Menu tab: item options (spice level, requests ...), sold-out switches and combo contents.
 // Dishes and prices stay in data/menu.json (deployed); these settings live in D1.
-// Editing options and combos is limited to ADMIN_EMAILS; any staff member can mark sold out.
+// Editing options and combos only works on the admin site (/jadmin/); every site can mark dishes sold out.
 'use strict';
 
 const ruleText = (g) => (g.min ? 'Required · choose one' : g.max === 1 ? 'Optional · choose one' : 'Optional · choose any');
@@ -40,7 +40,7 @@ function viewMenu() {
 async function toggleSold(id) {
   const now = !S.sold.has(id);
   try {
-    await api('PUT', `/api/staff/menu/${id}/availability`, { sold_out: now });
+    await api('PUT', `${API}/menu/${id}/availability`, { sold_out: now });
     if (now) S.sold.add(id); else S.sold.delete(id);
     toast(`${shortName(S.byId.get(id)?.name)} ${now ? 'sold out' : 'available again'}`);
   } catch (e) {
@@ -92,7 +92,7 @@ async function saveGroup() {
   const E = U.ge;
   const max = E.rule === 'any' ? Math.max(1, E.opts.filter((o) => o.n.trim()).length) : 1;
   try {
-    const r = await api('PUT', `/api/staff/options/${encodeURIComponent(E.id || 'new')}`, {
+    const r = await api('PUT', `${API}/options/${encodeURIComponent(E.id || 'new')}`, {
       name: E.name, min: E.rule === 'req' ? 1 : 0, max,
       options: E.opts.map((o) => ({ name: o.n, price_cents: Math.round((parseFloat(o.p) || 0) * 100) })),
       item_ids: [...E.items],
@@ -110,7 +110,7 @@ async function saveGroup() {
 async function deleteGroup() {
   const E = U.ge;
   try {
-    await api('DELETE', `/api/staff/options/${encodeURIComponent(E.id)}`);
+    await api('DELETE', `${API}/options/${encodeURIComponent(E.id)}`);
     S.groups = S.groups.filter((g) => g.id !== E.id);
     U.modal = null; U.ge = null;
     toast('Option group deleted');
@@ -146,7 +146,7 @@ function comboModal() {
 async function saveCombo() {
   const E = U.ce;
   try {
-    const { combo } = await api('PUT', `/api/staff/combos/${E.id}`, {
+    const { combo } = await api('PUT', `${API}/combos/${E.id}`, {
       components: E.lines.map((l) => (l.id != null ? { id: l.id, qty: l.qty } : { name: l.name, qty: l.qty })),
     });
     if (combo.components.length) S.combos.set(combo.combo_id, combo.components); else S.combos.delete(combo.combo_id);

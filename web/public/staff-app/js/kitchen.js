@@ -40,7 +40,7 @@ function ticketHtml(t) {
     <ul>${t.note ? `<li class="chg">!! ${esc(t.note)}</li>` : ''}${notes}${items}${voids ? `<li class="muted">— VOID —</li>${voids}` : ''}</ul>
     <footer><span class="ttype">${(TYPES[o.delivery_type] || '').toUpperCase()}</span>${pay}
       ${t.whole && !isPos(o) && !o.received_at && !t.done_at ? `<button class="btn sm accent" data-act="received" data-id="${esc(o.id)}">Received</button>` : ''}
-      ${t.done_at ? `<button class="btn sm" data-act="recall" data-id="${doneId}" data-whole="${t.whole ? 1 : 0}">Recall</button>`
+      ${!can.bump && !t.whole ? '' : t.done_at ? `<button class="btn sm" data-act="recall" data-id="${doneId}" data-whole="${t.whole ? 1 : 0}">Recall</button>`
         : `<button class="btn sm primary" data-act="bump" data-id="${doneId}" data-whole="${t.whole ? 1 : 0}">Done</button>`}</footer>
   </article>`;
 }
@@ -71,7 +71,7 @@ async function bump(id, whole, done) {
     return;
   }
   try {
-    const r = await api('PATCH', `/api/staff/tickets/${encodeURIComponent(id)}`, { done });
+    const r = await api('PATCH', `${API}/tickets/${encodeURIComponent(id)}`, { done });
     const i = S.tickets.findIndex((t) => String(t.id) === String(id));
     if (i >= 0) S.tickets[i] = r.ticket;
   } catch (e) {

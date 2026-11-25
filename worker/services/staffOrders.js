@@ -199,7 +199,7 @@ const nextOrderNumber = async (db) => {
   return row.value;
 };
 
-/** POST /api/staff/orders with `lines`. Returns the stored row. */
+/** POST /api/pos/orders with `lines`. Returns the stored row. */
 export async function createStaffOrder(db, body) {
   const deliveryType = STAFF_TYPES.includes(body.delivery_type) ? body.delivery_type : 'pickup';
   const source = body.source === 'Phone' ? 'Phone' : 'Walk-in';
@@ -272,7 +272,7 @@ export async function paidCents(db, orderId) {
 }
 
 /**
- * PUT /api/staff/orders/:id: replace the lines / details of an open POS order.
+ * PUT /api/pos/orders/:id: replace the lines / details of an open POS order.
  * body.send = true also sends every change to the kitchen.
  */
 export async function updateStaffOrder(db, id, body) {
@@ -324,7 +324,7 @@ export async function updateStaffOrder(db, id, body) {
     db
       .prepare(
         `UPDATE orders SET delivery_type = ?, customer_id = ?, customer_name = ?, customer_phone = ?, delivery_address = ?,
-           customer_notes = ?, items_json = ?, subtotal_cents = ?, discount_cents = ?, delivery_fee_cents = ?,
+           customer_notes = ?, delivery_time_slot = ?, items_json = ?, subtotal_cents = ?, discount_cents = ?, delivery_fee_cents = ?,
            tax_cents = ?, total_cents = ?, table_id = ?, guests = ?, staff_discount_json = ?, pending_voids_json = ?,
            updated_at = ?
          WHERE id = ? AND status = 'pending'`
@@ -332,6 +332,9 @@ export async function updateStaffOrder(db, id, body) {
       .bind(
         deliveryType, customerId, cust.name, cust.phone || null, cust.address || null,
         body.customer_notes !== undefined ? cleanText(body.customer_notes, 500) || null : row.customer_notes,
+        body.delivery_time_slot !== undefined
+          ? cleanText(body.delivery_time_slot, 60) || (deliveryType === 'delivery' ? 'ASAP' : deliveryType === 'pickup' ? 'Pick Up' : 'Dine-in')
+          : row.delivery_time_slot,
         JSON.stringify(stored), totals.subtotal_cents, totals.discount_cents, totals.delivery_fee_cents,
         totals.tax_cents, totals.total_cents, tableId,
         body.guests !== undefined ? Math.floor(Number(body.guests)) || null : row.guests,
@@ -348,7 +351,7 @@ export async function updateStaffOrder(db, id, body) {
 }
 
 /**
- * POST /api/staff/orders/:id/payments {method, amount, tendered?, label?, close?}
+ * POST /api/pos/orders/:id/payments {method, amount, tendered?, label?, close?}
  * amount and tendered are dollars from the staff screen; stored as cents. A payment can
  * never exceed the balance. close = true completes the order once nothing is left to pay.
  */
