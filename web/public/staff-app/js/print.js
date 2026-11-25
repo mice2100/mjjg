@@ -25,7 +25,8 @@ function thermalHtml(o, mm) {
     <div class="item">${row(`<b>${it.qty} &times; ${esc(shortOf(it.id ?? it.name) || shortName(it.name))}</b>`, it.free ? 'FREE' : money(it.price * it.qty))}
       ${shortOf(it.id ?? it.name) ? `<div class="sub">${esc(shortName(it.name))}</div>` : ''}
       ${(it.mods || []).map((m) => `<div class="sub">- ${esc(m.n)}${m.price ? ' +' + money(m.price) : ''}</div>`).join('')}
-      ${(it.components || []).map((c) => `<div class="sub">- ${c.qty * it.qty} &times; ${esc(shortName(c.name))}</div>`).join('')}
+      ${/* the customer's copy: plain dish names, no counts, sauces or containers (staff see those on screen) */ ''}
+      ${(it.components || []).map((c) => (S.names ? S.names.customerName(c.name) : shortName(c.name))).filter(Boolean).map((n) => `<div class="sub">- ${esc(n)}</div>`).join('')}
       ${it.note ? `<div class="sub">* ${esc(it.note)}</div>` : ''}
       ${it.disc ? row(`&nbsp;&nbsp;${discLabel(it.disc)}`, '-' + money(it.disc_amount)) : ''}
     </div>`).join('');

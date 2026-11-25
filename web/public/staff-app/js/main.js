@@ -334,7 +334,7 @@ window.addEventListener('beforeunload', (e) => {
 
 // ---------- start-up ----------
 async function loadReference() {
-  const [menu, streets, search, address, slots, settings, combos] = await Promise.all([
+  const [menu, streets, search, address, slots, settings, combos, names] = await Promise.all([
     fetch('/api/menu').then((r) => r.json()),
     fetch('/api/streets', { cache: 'no-cache' }).then((r) => r.json()), // the lists change; do not use an old copy
     import('/js/search.js'),
@@ -342,7 +342,9 @@ async function loadReference() {
     import('/js/slots.js'),
     api('GET', `${API}/menu`),
     api('GET', `${API}/combos`),
+    import('/js/customerNames.js'), // set-dinner contents in plain names for the printed receipt
   ]);
+  S.names = names;
   S.menu = menu.menu || [];
   S.byId = new Map(S.menu.map((i) => [i.id, i]));
   S.byName = new Map(S.menu.map((i) => [i.name.toLowerCase(), i]));

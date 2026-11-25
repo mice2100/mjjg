@@ -8,7 +8,7 @@ import { createOrder, expireUnpaidOrders, getPublicOrderStatus, reconcileCloverP
 import { createCheckout, isCloverConfigured } from '../services/clover.js';
 import { listOptionGroups, listSoldOut } from '../services/options.js';
 import { listCombos } from '../services/combos.js';
-import { customerContents } from '../lib/customerNames.js';
+import { customerContents } from '../../web/src/lib/customerNames.js';
 import { PLACES, deliveryPlaceFor } from '../lib/places.js';
 import { getSessionCustomerId } from '../auth/session.js';
 import streets from '../../data/moose_jaw_streets.json' with { type: 'json' };

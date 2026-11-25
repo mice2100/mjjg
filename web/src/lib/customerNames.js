@@ -1,4 +1,5 @@
-// What a set dinner contains, as customers read it on the website.
+// What a set dinner contains, as customers read it (website, printed receipt). Shared: the Worker
+// imports it, the staff app loads it from /js/customerNames.js.
 // Staff keep the kitchen version (counts, sauce sizes, containers such as (Round), (6*9), (EP28));
 // customers see plain dish names, like the printed menu: "Spring Roll", "Chicken Balls or Sweet & Sour Pork".
 
