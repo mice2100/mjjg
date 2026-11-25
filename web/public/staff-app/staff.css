@@ -438,7 +438,7 @@ textarea.input{resize:vertical;min-height:60px}
 .banner-pay.ok{background:var(--ok-soft);color:var(--ok)}
 .banner-pay.due{background:var(--danger-soft);color:var(--danger)}
 .classic{font-size:13px}
-@media (max-width:860px){.startgrid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){.startgrid{grid-template-columns:minmax(0,1fr)}}
 @media print{
   body *{visibility:hidden}
   .receipt,.receipt *{visibility:visible}
@@ -522,3 +522,17 @@ body.osk-open .fanwrap{display:none}
 /* table numbers centred on the table top (also on the narrow tables) */
 .fmap .top{align-items:center;justify-content:center;overflow:visible;padding:0;gap:1px;flex-wrap:nowrap} /* .top is also the header class: drop its padding */
 .fmap .top .tno,.fmap .top .tsub{display:block;width:max-content;max-width:none;text-align:center;white-space:nowrap;margin:0 auto}
+
+/* order panel: header, customer and lines scroll together; totals and pay buttons stay put */
+.pscroll{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;-webkit-overflow-scrolling:touch}
+.pscroll .lines{flex:1 0 auto;overflow:visible}
+@media (max-width:860px){.pscroll{overflow:visible}}
+
+/* phone sheet: the keypad column stays in view while the right side scrolls */
+@media (min-width:601px){.startgrid > div:first-child{position:sticky;top:0}}
+#s-phone{scroll-margin:0}
+
+/* gluten free available: badge in the tile's top-right corner */
+.tile{position:relative}
+.gfmark{position:absolute;top:6px;right:6px;font-size:10px;font-weight:800;letter-spacing:.04em;line-height:1;padding:4px 5px;border-radius:999px;background:#E3F1E7;color:#2F6B43;border:1px solid #9CC7A9}
+.tile:has(.gfmark) .tname{padding-right:26px}

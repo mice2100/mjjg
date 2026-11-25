@@ -151,6 +151,7 @@ function itemsHtml() {
     const opts = asksOptions(i.id);
     return `<button class="tile ${out ? 'out' : ''}" data-act="item" data-id="${i.id}" ${out ? 'disabled aria-disabled="true"' : ''}>
       ${i.code ? `<span class="tcode">${esc(i.code)}</span>` : ''}
+      ${isGf(i.id) ? '<span class="gfmark" title="Gluten free available" aria-label="Gluten free available">GF</span>' : ''}
       ${dishHtml(i.name, i.id, 'tname')}
       ${combo ? `<span class="tdesc">${esc(combo)}</span>` : ''}
       <span class="tmeta"><span>${$m(i.price)}</span>
@@ -206,9 +207,11 @@ function orderPanel(d) {
       <div><div class="eyebrow">${d.id ? esc(d.id) : 'New order'} · ${esc(d.source)} · opened ${fmtTime(d.created_at)}${d.dirty ? ' · <span class="st-unsent">not saved</span>' : ''}</div><h2>${esc(draftLabel(d))}</h2></div>
       <button class="minbtn" data-act="minPanel" aria-label="Put this order aside" title="Put this order aside (it is kept)">−</button>
     </div>
+    <div class="pscroll" data-keep="pscroll">
     <div class="seg" style="grid-template-columns:repeat(3,1fr)" role="group" aria-label="Order type">${seg}</div>
     <div class="ofields">${fields}</div>
-    <div class="lines" data-keep="lines">${lines || '<div class="empty"><b>No items yet</b><span>Tap a dish to add it. Tap a line to add options, a note or a discount.</span></div>'}${voids}</div>
+    <div class="lines">${lines || '<div class="empty"><b>No items yet</b><span>Tap a dish to add it. Tap a line to add options, a note or a discount.</span></div>'}${voids}</div>
+    </div>
     <div class="totals">
       <div class="trow"><span>Food subtotal</span><span>${$c(T.sub)}</span></div>
       ${T.itemDisc ? `<div class="trow disc"><span>Item discounts</span><span>−${$c(T.itemDisc)}</span></div>` : ''}

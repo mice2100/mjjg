@@ -37,11 +37,15 @@ function render() {
 
 function renderModal() {
   const el = $('modal');
-  if (!U.modal) { el.hidden = true; el.innerHTML = ''; return; }
+  if (!U.modal) { el.hidden = true; el.innerHTML = ''; delete el.dataset.modal; return; }
   const focus = captureFocus();
+  // Keep the sheet where it was scrolled: every keypad tap re-renders it.
+  const same = el.dataset.modal === U.modal, top = same ? [...el.querySelectorAll('.sbody')].map((b) => b.scrollTop) : [];
+  el.dataset.modal = U.modal;
   el.hidden = false;
   el.innerHTML = { item: itemModal, od: odModal, start: startModal, seat: seatModal, view: viewModal, pay: payModal, receipt: receiptModal, group: groupModal, combo: comboModal }[U.modal]();
   if (U.modal === 'start') drawAc();
+  el.querySelectorAll('.sbody').forEach((b, i) => { if (top[i]) b.scrollTop = top[i]; });
   restoreFocus(focus);
 }
 

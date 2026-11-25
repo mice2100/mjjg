@@ -49,6 +49,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
                   <div class="mi-text">
                     {item.code && <span class="mi-code">{item.code}</span>}
                     <span class="mi-name">{displayName(item)}</span>
+                    {item.gf && <span class="mi-gf" title="Gluten free available">GF</span>}
                   </div>
                   <span class="mi-price">{formatPrice(item.price)}</span>
                   <button type="button" class="mi-add" data-add={item.id} aria-label={`Add ${displayName(item)}`}>Add</button>
@@ -176,6 +177,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
   .mi-text { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
   .mi-code { flex: none; font-size: 12px; font-weight: 800; color: var(--jade-800); background: var(--jade-50); padding: 1px 7px; border-radius: 5px; }
   .mi-name { font-weight: 600; }
+  .mi-gf { flex: none; align-self: center; font-size: 11px; font-weight: 800; letter-spacing: .04em; color: #2F6B43; background: #E3F1E7; border: 1px solid #9CC7A9; padding: 1px 6px; border-radius: 999px; }
   .mi-price { font-weight: 700; font-variant-numeric: tabular-nums; }
   .mi-add { min-height: 40px; min-width: 64px; border-radius: 999px; border: 1.5px solid var(--jade-600); background: var(--paper); color: var(--jade-800); font-weight: 700; cursor: pointer; }
   .mi-add:hover { background: var(--jade-800); color: #fff; }

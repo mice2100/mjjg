@@ -37,7 +37,8 @@
       "code": "",
       "name": "Gluten Free Combo",
       "price": 14.95,
-      "category": "Dinner for One"
+      "category": "Dinner for One",
+      "gf": true
     },
     {
       "id": 99,
@@ -206,7 +207,8 @@
       "code": "F3",
       "name": "F3 Chicken Fried Rice",
       "price": 13.95,
-      "category": "Fried Rice"
+      "category": "Fried Rice",
+      "gf": true
     },
     {
       "id": 43,
@@ -214,7 +216,8 @@
       "code": "F4",
       "name": "F4 Shrimp Fried Rice",
       "price": 14.95,
-      "category": "Fried Rice"
+      "category": "Fried Rice",
+      "gf": true
     },
     {
       "id": 44,
@@ -222,7 +225,8 @@
       "code": "F5",
       "name": "F5 Mushroom Fried Rice",
       "price": 13.95,
-      "category": "Fried Rice"
+      "category": "Fried Rice",
+      "gf": true
     },
     {
       "id": 45,
@@ -238,7 +242,8 @@
       "code": "F7",
       "name": "F7 Vegetable Fried Rice",
       "price": 11.95,
-      "category": "Fried Rice"
+      "category": "Fried Rice",
+      "gf": true
     },
     {
       "id": 47,
@@ -247,6 +252,15 @@
       "price": 13.95,
       "category": "Fried Rice",
       "image": "/images/menu/47.webp"
+    },
+    {
+      "id": 117,
+      "short": "BT BAC FR",
+      "code": "F9",
+      "name": "F9 Black Truffle Bacon Fried Rice",
+      "price": 19.95,
+      "category": "Fried Rice",
+      "gf": true
     },
     {
       "id": 52,
@@ -263,7 +277,8 @@
       "code": "N10",
       "name": "N10 Special Fried Rice Noodles",
       "price": 16.95,
-      "category": "Noodles & Chow Mein"
+      "category": "Noodles & Chow Mein",
+      "gf": true
     },
     {
       "id": 54,
@@ -351,13 +366,32 @@
       "category": "Noodles & Chow Mein"
     },
     {
+      "id": 118,
+      "short": "CK FRN",
+      "code": "N13",
+      "name": "N13 Chicken Fried Rice Noodles",
+      "price": 14.95,
+      "category": "Noodles & Chow Mein",
+      "gf": true
+    },
+    {
+      "id": 119,
+      "short": "SHR FRN",
+      "code": "N14",
+      "name": "N14 Shrimp Fried Rice Noodles",
+      "price": 15.95,
+      "category": "Noodles & Chow Mein",
+      "gf": true
+    },
+    {
       "id": 81,
       "short": "BUDD VEG",
       "code": "V1",
       "name": "V1 Buddha's Vegetables",
       "price": 14.95,
       "category": "Vegetables",
-      "image": "/images/menu/81.webp"
+      "image": "/images/menu/81.webp",
+      "gf": true
     },
     {
       "id": 82,
@@ -365,7 +399,8 @@
       "code": "V2",
       "name": "V2 Braised Vegetables",
       "price": 14.95,
-      "category": "Vegetables"
+      "category": "Vegetables",
+      "gf": true
     },
     {
       "id": 83,
@@ -390,7 +425,8 @@
       "code": "V5",
       "name": "V5 Chicken with Mixed Vegetables",
       "price": 15.95,
-      "category": "Vegetables"
+      "category": "Vegetables",
+      "gf": true
     },
     {
       "id": 86,
@@ -407,7 +443,8 @@
       "name": "V7 Mushroom with Mixed Vegetables",
       "price": 14.95,
       "category": "Vegetables",
-      "image": "/images/menu/87.webp"
+      "image": "/images/menu/87.webp",
+      "gf": true
     },
     {
       "id": 17,
@@ -476,7 +513,8 @@
       "code": "C8",
       "name": "C8 Almond Diced Chicken with Vegetables",
       "price": 15.95,
-      "category": "Chicken"
+      "category": "Chicken",
+      "gf": true
     },
     {
       "id": 25,
@@ -484,7 +522,8 @@
       "code": "C9",
       "name": "C9 Cashew Nut Diced Chicken",
       "price": 15.95,
-      "category": "Chicken"
+      "category": "Chicken",
+      "gf": true
     },
     {
       "id": 26,
@@ -493,7 +532,8 @@
       "name": "C10 Chicken with Sugar Pea",
       "price": 16.95,
       "category": "Chicken",
-      "image": "/images/menu/26.webp"
+      "image": "/images/menu/26.webp",
+      "gf": true
     },
     {
       "id": 27,
@@ -518,7 +558,8 @@
       "code": "C13",
       "name": "C13 Chicken with Chinese Mushrooms",
       "price": 15.95,
-      "category": "Chicken"
+      "category": "Chicken",
+      "gf": true
     },
     {
       "id": 8,
@@ -601,7 +642,8 @@
       "code": "P2",
       "name": "P2 Garlic Spare Ribs",
       "price": 15.95,
-      "category": "Pork"
+      "category": "Pork",
+      "gf": true
     },
     {
       "id": 56,
@@ -609,7 +651,8 @@
       "code": "P3",
       "name": "P3 Sweet & Sour Ribs (with Pineapple)",
       "price": 14.95,
-      "category": "Pork"
+      "category": "Pork",
+      "gf": true
     },
     {
       "id": 57,
@@ -618,7 +661,8 @@
       "name": "P4 Sweet & Sour Pork Tenderloin",
       "price": 14.95,
       "category": "Pork",
-      "image": "/images/menu/57.webp"
+      "image": "/images/menu/57.webp",
+      "gf": true
     },
     {
       "id": 58,
@@ -636,7 +680,8 @@
       "name": "P1. Montreal Spare Ribs",
       "price": 15.95,
       "category": "Pork",
-      "image": "/images/menu/115.webp"
+      "image": "/images/menu/115.webp",
+      "gf": true
     },
     {
       "id": 59,
@@ -653,7 +698,8 @@
       "code": "S2",
       "name": "S2 Pan Fried Squids (with Ginger & Onions)",
       "price": 19.95,
-      "category": "Seafood"
+      "category": "Seafood",
+      "gf": true
     },
     {
       "id": 61,
@@ -676,7 +722,8 @@
       "code": "S6",
       "name": "S6 Shrimp with Fresh Tomato and Sauce",
       "price": 16.95,
-      "category": "Seafood"
+      "category": "Seafood",
+      "gf": true
     },
     {
       "id": 64,
@@ -684,7 +731,8 @@
       "code": "S7",
       "name": "S7 Pan Fried Shrimp with Assorted Vegetables",
       "price": 16.95,
-      "category": "Seafood"
+      "category": "Seafood",
+      "gf": true
     },
     {
       "id": 65,
@@ -701,7 +749,8 @@
       "name": "S9 Shrimp & Chicken with Vegetables",
       "price": 16.95,
       "category": "Seafood",
-      "image": "/images/menu/66.webp"
+      "image": "/images/menu/66.webp",
+      "gf": true
     },
     {
       "id": 67,
@@ -844,7 +893,8 @@
       "code": "T1",
       "name": "T1 Suey Choy with Garlic Sauce",
       "price": 14.95,
-      "category": "Traditional Chinese Food & Specialties"
+      "category": "Traditional Chinese Food & Specialties",
+      "gf": true
     },
     {
       "id": 69,
@@ -852,7 +902,8 @@
       "code": "T2",
       "name": "T2 Zucchini with Mushrooms",
       "price": 13.95,
-      "category": "Traditional Chinese Food & Specialties"
+      "category": "Traditional Chinese Food & Specialties",
+      "gf": true
     },
     {
       "id": 70,

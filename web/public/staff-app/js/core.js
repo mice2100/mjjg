@@ -118,6 +118,8 @@ const MINE = new Set(); // orders created on this device (no ringtone for them)
 const discCents = (d, base) => (!d ? 0 : d.t === 'pct' ? Math.round((base * d.v) / 100) : Math.min(d.v, base));
 const discLabel = (d) => (d.t === 'pct' ? (d.v >= 100 ? 'Comp' : d.v + '% off') : $c(d.v) + ' off');
 function groupsFor(itemId) { return S.groups.filter((g) => g.item_ids.includes(itemId)); }
+// Dishes that can be made gluten free (the gluten_free option group).
+const isGf = (itemId) => S.groups.some((g) => g.id === 'gluten_free' && g.item_ids.includes(itemId));
 // Open the option picker when a dish is tapped: a required choice, or options that cost extra (extra people).
 const asksOptions = (itemId) => groupsFor(itemId).some((g) => g.min > 0 || g.options.some((o) => o.price_cents > 0));
 function modPriceCents(m) {
