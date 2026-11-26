@@ -1,7 +1,9 @@
 // Receipt printing on a thermal roll printer (80 mm or 58 mm paper), from mice2100's version:
 // a narrow black-and-white receipt goes through a hidden frame, so the staff screen is never
 // printed. In the print dialog choose the receipt printer and set Margins to "None".
-// The paper width is remembered per device (the "80 mm" / "58 mm" button next to Print).
+// The paper width is remembered per device (the "Paper: 80 mm" button in the top bar).
+// Two copies: the customer receipt (plain dish names) and the merchant receipt (the restaurant's
+// copy: set-dinner contents with counts, as staff read them, and a signature line when unpaid).
 'use strict';
 
 const RESTAURANT = { name: 'JADE GARDEN', sub: 'RESTAURANT', address: '471 Main St N, Moose Jaw, SK S6H 0W5', phone: '(306) 694-5566' };
@@ -13,10 +15,16 @@ function toggleReceiptMm() {
   const next = receiptMm() === 80 ? 58 : 80;
   try { localStorage.setItem('jg_receipt_mm', String(next)); } catch { /* private mode */ }
   toast(`Receipt paper: ${next} mm`);
+  paperButton();
 }
-const printButtons = (id) => `<button class="btn" data-act="print" data-id="${esc(id)}">Print</button><button class="btn sm ghost" data-act="paper" title="Receipt paper width">${receiptMm()} mm</button>`;
+function paperButton() {
+  const b = $('paperBtn');
+  if (b) b.textContent = `Paper: ${receiptMm()} mm`;
+}
+const printButtons = (id) => `<button class="btn" data-act="print" data-id="${esc(id)}">Print customer receipt</button><button class="btn" data-act="printMerchant" data-id="${esc(id)}">Print merchant receipt</button>`;
 
-function thermalHtml(o, mm) {
+function thermalHtml(o, mm, copy = 'customer') {
+  const merchant = copy === 'merchant';
   const money = (n) => '$' + Number(n).toFixed(2);
   const row = (l, r, cls = '') => `<div class="row ${cls}"><span class="l">${l}</span><span class="r">${r}</span></div>`;
   const kind = o.delivery_type === 'delivery' ? 'DELIVERY' : o.delivery_type === 'dinein' ? 'DINE-IN' : 'PICK UP';
@@ -25,8 +33,10 @@ function thermalHtml(o, mm) {
     <div class="item">${row(`<b>${it.qty} &times; ${esc(shortOf(it.id ?? it.name) || shortName(it.name))}</b>`, it.free ? 'FREE' : money(it.price * it.qty))}
       ${shortOf(it.id ?? it.name) ? `<div class="sub">${esc(shortName(it.name))}</div>` : ''}
       ${(it.mods || []).map((m) => `<div class="sub">- ${esc(m.n)}${m.price ? ' +' + money(m.price) : ''}</div>`).join('')}
-      ${/* the customer's copy: plain dish names, no counts, sauces or containers (staff see those on screen) */ ''}
-      ${(it.components || []).map((c) => (S.names ? S.names.customerName(c.name) : shortName(c.name))).filter(Boolean).map((n) => `<div class="sub">- ${esc(n)}</div>`).join('')}
+      ${/* customer copy: plain dish names, no counts, sauces or containers; merchant copy: as staff read them */ ''}
+      ${merchant
+    ? (it.components || []).map((c) => `<div class="sub">- ${c.qty * it.qty}&times; ${esc(shortName(c.name))}</div>`).join('')
+    : (it.components || []).map((c) => (S.names ? S.names.customerName(c.name) : shortName(c.name))).filter(Boolean).map((n) => `<div class="sub">- ${esc(n)}</div>`).join('')}
       ${it.note ? `<div class="sub">* ${esc(it.note)}</div>` : ''}
       ${it.disc ? row(`&nbsp;&nbsp;${discLabel(it.disc)}`, '-' + money(it.disc_amount)) : ''}
     </div>`).join('');
@@ -63,12 +73,14 @@ function thermalHtml(o, mm) {
     .grand { font: 800 ${mm === 58 ? 15 : 18}px/1.3 Arial, Helvetica, sans-serif; margin-top: 3px; }
     .note { border: 2px solid #000; padding: 3px 5px; margin: 5px 0; font-weight: 700; }
     .pay { text-align: center; font: 800 ${mm === 58 ? 14 : 17}px Arial, sans-serif; border: 2px solid #000; padding: 4px; margin-top: 6px; }
+    .copy { font: 800 ${mm === 58 ? 12 : 14}px Arial, sans-serif; letter-spacing: 2px; margin-bottom: 2px; }
+    .sign { margin-top: 18px; border-top: 1px solid #000; padding-top: 2px; text-align: center; font-size: ${mm === 58 ? 10 : 11}px; }
     .foot { margin-top: 8px; font-size: ${mm === 58 ? 10 : 11}px; }
   </style></head><body>
     <div class="c"><div class="brand">${RESTAURANT.name}</div><div>${RESTAURANT.sub}</div>
       <div>${RESTAURANT.address}</div><div>${RESTAURANT.phone}</div></div>
     <hr>
-    <div class="c"><div class="big">${esc(orderNo(o))}</div><div class="tag">${kind}${o.table_id ? ' · TABLE ' + esc(o.table_id) : ''}</div></div>
+    <div class="c"><div class="copy">${merchant ? 'MERCHANT COPY' : 'CUSTOMER COPY'}</div><div class="big">${esc(orderNo(o))}</div><div class="tag">${kind}${o.table_id ? ' · TABLE ' + esc(o.table_id) : ''}</div></div>
     ${row('Date', `${fmtDate(o.created_at)} ${fmtTime(o.created_at)}`)}
     ${o.delivery_type !== 'dinein' ? row(o.delivery_type === 'delivery' ? 'Deliver at' : 'Pick up at', esc(o.delivery_time_slot && !/^(ASAP|Pick Up)$/i.test(o.delivery_time_slot) ? o.delivery_time_slot : 'ASAP')) : ''}
     ${o.delivery_type !== 'dinein' ? `<hr>
@@ -84,16 +96,17 @@ function thermalHtml(o, mm) {
     ${row('TOTAL', money(o.total), 'grand')}
     ${pays ? '<hr>' + pays : ''}
     <div class="pay">${stamp}</div>
+    ${merchant && o.balance > 0 && o.payment_status !== 'paid' ? '<div class="sign">Signature</div>' : ''}
     <div class="c foot">Thank you!<br>Printed ${printed}</div>
   </body></html>`;
 }
 
-function printReceipt(id) {
+function printReceipt(id, copy = 'customer') {
   const o = S.orders.find((x) => x.id === id);
   if (!o) return;
   const frame = document.createElement('iframe');
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-  frame.srcdoc = thermalHtml(o, receiptMm());
+  frame.srcdoc = thermalHtml(o, receiptMm(), copy);
   frame.onload = () => {
     frame.contentWindow.focus();
     frame.contentWindow.print();

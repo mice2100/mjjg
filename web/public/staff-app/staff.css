@@ -483,7 +483,7 @@ textarea.input{resize:vertical;min-height:60px}
 @media (max-width:860px){.regsplit{grid-template-columns:minmax(0,1fr);height:auto}.regdetail{display:none}.regsplit .orders{height:auto;overflow:visible}}
 .regsplit .orders > *{flex-shrink:0}
 /* keep the + button over the card list, not over the order panel's buttons */
-@media (min-width:861px){.regsplit ~ .fanwrap{right:calc(max(16px,env(safe-area-inset-right,0px)) + 18px + min(440px,40vw) + 24px)}}
+@media (min-width:861px){.regsplit ~ .fanwrap{right:calc(max(16px,env(safe-area-inset-right,0px)) + 18px + 440px + 24px)}}
 
 /* on-screen keyboard (js/keyboard.js): docks at the bottom (the app shrinks above it) or, on
    landscape tablets, on the right (the app shrinks to its left) */

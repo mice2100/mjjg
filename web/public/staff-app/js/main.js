@@ -170,7 +170,8 @@ const A = {
   keepOrder: () => { U.confirmCancel = null; renderModal(); render(); },
   cancelOrder: async ({ id }) => { closeModal(); await setStatus(id, 'cancelled'); },
   reopen: async ({ id }) => { closeModal(); await setStatus(id, 'pending'); },
-  print: ({ id }) => printReceipt(id || U.viewId || U.sel),
+  print: ({ id }) => printReceipt(id || U.viewId || U.sel, 'customer'),
+  printMerchant: ({ id }) => printReceipt(id || U.viewId || U.sel, 'merchant'),
   paper: () => { toggleReceiptMm(); render(); if (U.modal) renderModal(); },
   // payment
   pmode: ({ m }) => { U.pay.mode = m; renderModal(); },
@@ -374,6 +375,7 @@ async function init() {
   setInterval(() => { if (!U.modal) render(); }, 60000); // minute counters
   soundButton();
   oskButton();
+  paperButton();
   setSync();
   render();
   try {

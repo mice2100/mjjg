@@ -50,6 +50,18 @@ export function wooLineOptions(it) {
   return mods;
 }
 
+// "2026-11-26", "11/26/2026" or a unix time -> "Thu, Nov 26"; anything else as it came.
+export function wooDay(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return '';
+  let d = null;
+  if (/^\d{9,11}$/.test(s)) d = new Date(Number(s) * 1000);
+  else if (/^\d{4}-\d{2}-\d{2}/.test(s)) d = new Date(`${s.slice(0, 10)}T12:00:00Z`);
+  else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) { const [mo, da, y] = s.split('/'); d = new Date(Date.UTC(+y, mo - 1, +da, 12)); }
+  if (!d || Number.isNaN(d.getTime())) return cleanText(s, 40);
+  return d.toLocaleDateString('en-CA', { timeZone: 'America/Regina', weekday: 'short', month: 'short', day: 'numeric' });
+}
+
 export function mapWooOrder(o) {
   const status = STATUS_MAP[o.status];
   if (!status) return null;
@@ -57,10 +69,14 @@ export function mapWooOrder(o) {
   const billing = o.billing || {};
   let deliveryType = 'pickup';
   let timeSlot = '';
+  let slotDate = '';
   for (const m of o.meta_data || []) {
     if (m.key === 'exwfood_order_method') deliveryType = String(m.value).toLowerCase() === 'delivery' ? 'delivery' : 'pickup';
     if ((m.key === 'exwfood_time_deli' || m.key === 'exwfood_timeslot') && !timeSlot) timeSlot = String(m.value);
+    if (m.key === 'exwfood_date_deli' && !slotDate) slotDate = wooDay(m.value);
   }
+  // The date the customer picked, when WooCommerce sends one: "Thu, Nov 26 · 17:00 - 17:30".
+  if (slotDate && timeSlot && /^\d{1,2}:\d{2}/.test(timeSlot)) timeSlot = `${slotDate} · ${timeSlot}`;
 
   let deliveryFeeCents = toCents(o.shipping_total);
   let tipCents = 0;

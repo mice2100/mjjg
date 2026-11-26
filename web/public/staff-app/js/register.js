@@ -88,15 +88,24 @@ function floorHtml() {
 }
 
 // ---------- order details ----------
+// On screen the order starts with the customer (the restaurant header is only on the printed
+// customer receipt). Time = date and time: a bare slot ("17:00 - 17:30") or ASAP gets the order's day.
+const fmtDay = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Regina', weekday: 'short', month: 'short', day: 'numeric' });
+function whenText(o) {
+  const slot = String(o.delivery_time_slot || '').trim();
+  if (o.delivery_type === 'dinein') return `${fmtDay(o.created_at)} · ${fmtTime(o.created_at)}`;
+  if (!slot || /^(ASAP|Pick ?Up)$/i.test(slot)) return `${fmtDay(o.created_at)} · ASAP (ordered ${fmtTime(o.created_at)})`;
+  return /^\d{1,2}:\d{2}/.test(slot) ? `${fmtDay(o.created_at)} · ${slot}` : slot;
+}
 function receiptHtml(o) {
   const r = (a, b) => `<div class="r"><span>${a}</span><span>${b}</span></div>`;
   const cust = [o.customer_name ? 'Name: ' + esc(o.customer_name) : '', o.customer_phone ? 'Phone: ' + esc(o.customer_phone) : '',
     o.delivery_type === 'delivery' && o.delivery_address ? 'Deliver to: ' + esc(o.delivery_address) : '',
-    o.delivery_time_slot && o.delivery_type !== 'dinein' ? 'Time: ' + esc(o.delivery_time_slot) : '',
+    'Time: ' + esc(whenText(o)),
     o.customer_notes ? 'Notes: ' + esc(o.customer_notes) : ''].filter(Boolean).map((x) => `<div>${x}</div>`).join('');
   const paid = o.balance <= 0;
   const stamp = o.status === 'cancelled' ? 'CANCELLED' : o.payment_status === 'paid' ? 'PAID ONLINE' : paid ? (o.status === 'pending' ? 'PAID IN ADVANCE' : 'PAID') : 'BALANCE DUE ' + $m(o.balance);
-  const lines = o.items.map((it) => r(`${it.qty} ${esc(shortName(it.name))}`, $m(it.price * it.qty))
+  const lines = o.items.map((it) => r(`<b>${it.qty} ${esc(shortName(it.name))}</b>`, `<b>${$m(it.price * it.qty)}</b>`)
     + (it.mods || []).map((m) => `<div class="s">${esc(m.n)}${m.price ? ' +' + $m(m.price) : ''}</div>`).join('')
     + (it.components || []).map((c) => `<div class="s">↳ ${c.qty * it.qty}× ${esc(shortName(c.name))}</div>`).join('')
     + (it.note ? `<div class="s">Note: ${esc(it.note)}</div>` : '')
@@ -104,10 +113,7 @@ function receiptHtml(o) {
   const itemDisc = o.items.reduce((s, it) => s + cents(it.disc_amount), 0);
   const orderDisc = cents(o.discount) - itemDisc;
   return `<div class="receipt">
-    <div class="c"><b>JADE GARDEN RESTAURANT</b></div><div class="c">471 Main St N, Moose Jaw · (306) 694-5566</div>
-    <div class="c">${esc(orderNo(o))} · ${esc(orderLabel(o))}</div>
-    <div class="c">${fmtDate(o.created_at)} ${fmtTime(o.created_at)}</div>
-    ${cust ? '<hr>' + cust : ''}<hr>
+    ${cust}<hr>
     ${lines || '<div class="c muted">No items</div>'}<hr>
     ${r('Food subtotal', $m(o.subtotal))}${itemDisc ? r('Item discounts', '−' + $c(itemDisc)) : ''}
     ${orderDisc > 0 ? r(o.coupon_code ? 'Coupon ' + esc(o.coupon_code) : o.order_discount ? 'Order discount ' + discLabel(o.order_discount) : 'Discount', '−' + $c(orderDisc)) : ''}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mapWooOrder, wooLineOptions } from './woocommerce.js';
+import { mapWooOrder, wooDay, wooLineOptions } from './woocommerce.js';
 
 test('WooCommerce line options reach the order lines', () => {
   const line = {
@@ -19,4 +19,13 @@ test('WooCommerce line options reach the order lines', () => {
   assert.equal(items[0].mods[0].price_cents, 0);
   assert.equal(items[1].mods, undefined);
   assert.equal(o.subtotal_cents, 1495 + 1595);
+});
+
+test('WooCommerce pickup date goes in front of the time slot', () => {
+  assert.equal(wooDay('2026-11-26'), 'Thu, Nov 26');
+  assert.equal(wooDay('11/27/2026'), 'Fri, Nov 27');
+  const o = mapWooOrder({ id: 2, status: 'processing', billing: {}, line_items: [],
+    meta_data: [{ key: 'exwfood_time_deli', value: '17:00 - 17:30' }, { key: 'exwfood_date_deli', value: '2026-11-26' }] });
+  assert.equal(o.delivery_time_slot, 'Thu, Nov 26 · 17:00 - 17:30');
+  assert.equal(mapWooOrder({ id: 3, status: 'processing', billing: {}, line_items: [], meta_data: [{ key: 'exwfood_time_deli', value: '17:00 - 17:30' }] }).delivery_time_slot, '17:00 - 17:30');
 });
