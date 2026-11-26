@@ -23,6 +23,33 @@ const STATUS_MAP = {
   trash: 'cancelled',
 };
 
+// What the customer picked on a WooCommerce line (e.g. "Noodle Type: Low Mein (Soft Skinny
+// Noodles)"), from line_items[].meta_data. Keys starting with "_" are WooCommerce/plugin internals.
+// Shown on the kitchen screen and tickets as "Label: choice". price_cents 0: WooCommerce already
+// includes option prices in the line price.
+const decode = (t) => String(t)
+  .replace(/<[^>]*>/g, ' ')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#8211;/g, '–').replace(/&#36;/g, '$')
+  .replace(/\s+/g, ' ').trim();
+
+export function wooLineOptions(it) {
+  const mods = [];
+  for (const m of it?.meta_data || []) {
+    const key = String(m?.key ?? '');
+    if (!key || key.startsWith('_')) continue;
+    const raw = m.display_value ?? m.value;
+    const vals = Array.isArray(raw) ? raw : [raw];
+    if (vals.some((v) => v !== null && typeof v === 'object')) continue; // plugin data, not a choice
+    const value = decode(vals.filter((v) => v !== null && v !== '').join(', '));
+    const label = decode(m.display_key || key);
+    if (!value) continue;
+    const n = cleanText(label ? `${label}: ${value}` : value, 160);
+    if (!mods.some((x) => x.n === n)) mods.push({ g: 'wc', group: label, n, price_cents: 0 });
+  }
+  return mods;
+}
+
 export function mapWooOrder(o) {
   const status = STATUS_MAP[o.status];
   if (!status) return null;
@@ -48,13 +75,17 @@ export function mapWooOrder(o) {
     }
   }
 
-  const items = (o.line_items || []).map((it) => ({
-    id: null,
-    code: it.sku || (String(it.name).match(/^([A-Z]+\d+[A-Z]?)\b/) || [])[1] || '',
-    name: it.name,
-    price_cents: toCents(it.price),
-    qty: it.quantity || 1,
-  }));
+  const items = (o.line_items || []).map((it) => {
+    const mods = wooLineOptions(it);
+    return {
+      id: null,
+      code: it.sku || (String(it.name).match(/^([A-Z]+\d+[A-Z]?)\b/) || [])[1] || '',
+      name: it.name,
+      price_cents: toCents(it.price),
+      qty: it.quantity || 1,
+      ...(mods.length ? { mods } : {}),
+    };
+  });
 
   const address = [billing.address_1, billing.address_2, billing.city, billing.state, billing.postcode].filter(Boolean).join(', ');
   const toIso = (gmt) => (gmt ? `${gmt}Z` : nowIso());
