@@ -54,8 +54,8 @@ const qtyOf = (id) => state.lines.filter((l) => l.id === id).reduce((a, l) => a 
 // ---- dish options (same groups as the POS; the server checks and prices them) ----
 const groupsFor = (id) => groups.filter((g) => g.item_ids.includes(id));
 // A dish opens the choice window when it has a required choice or an option that costs extra.
-// Spicy dishes (chilli icon) open it too, to pick the spice level.
-const needsChoice = (id) => groupsFor(id).some((g) => g.min > 0 || g.id === 'spice' || g.options.some((o) => o.price_cents > 0));
+// Spicy dishes (chilli icon) and gluten free dishes (GF badge) open it too: spice level / gluten free.
+const needsChoice = (id) => groupsFor(id).some((g) => g.min > 0 || g.id === 'spice' || g.id === 'gluten_free' || g.options.some((o) => o.price_cents > 0));
 // "+1 person / +2 people / …" priced n × the first option: shown as a quantity, like the POS.
 const isCounter = (g) => g.min === 0 && g.max === 1 && g.options.length > 1
   && g.options.every((o, i) => new RegExp(`^\\+${i + 1}\\b`).test(o.name) && o.price_cents === g.options[0].price_cents * (i + 1));
@@ -101,6 +101,9 @@ function counterHtml(g, pick) {
       <span class="opt-price">${n ? '+' + money(each * n) : 'None added'}</span></div></div>`;
 }
 
+// A single optional choice (e.g. Gluten free) is a tick box, so it can be un-ticked.
+const tickBox = (g) => g.min === 0 && g.options.length === 1;
+
 let choiceDialog = null;
 function openChoice(id) {
   const item = menu.get(id);
@@ -120,8 +123,8 @@ function openChoice(id) {
     const total = unitCents({ id, mods }) * qty;
     d.innerHTML = `<form method="dialog" class="opt-form">
       <header><h3></h3><button type="button" class="opt-x" aria-label="Close">✕</button></header>
-      <div class="opt-groups">${list.map((g) => isCounter(g) ? counterHtml(g, pick) : `<fieldset data-g="${g.id}"><legend>${g.name}${g.min ? ' <span class="opt-req">Required</span>' : ''}<small>${g.max === 1 ? 'Pick one' : 'Pick any'}</small></legend>
-        ${g.options.map((o) => `<label class="opt-row"><input type="${g.max === 1 ? 'radio' : 'checkbox'}" name="g-${g.id}" value="${o.name.replace(/"/g, '&quot;')}" ${pick[g.id].includes(o.name) ? 'checked' : ''}>
+      <div class="opt-groups">${list.map((g) => isCounter(g) ? counterHtml(g, pick) : `<fieldset data-g="${g.id}"><legend>${g.name}${g.min ? ' <span class="opt-req">Required</span>' : ''}<small>${tickBox(g) ? 'Optional' : g.max === 1 ? (g.min ? 'Pick one' : 'Optional · pick one') : 'Pick any'}</small></legend>
+        ${g.options.map((o) => `<label class="opt-row"><input type="${g.max === 1 && !tickBox(g) ? 'radio' : 'checkbox'}" name="g-${g.id}" value="${o.name.replace(/"/g, '&quot;')}" ${pick[g.id].includes(o.name) ? 'checked' : ''}>
           <span class="opt-name"></span><span class="opt-price">${o.price_cents ? '+' + money(o.price_cents) : ''}</span></label>`).join('')}</fieldset>`).join('')}</div>
       <footer><span class="qty"><button type="button" data-q="-1" aria-label="One less">−</button><span>${qty}</span><button type="button" data-q="1" aria-label="One more">+</button></span>
         <button type="button" class="btn-add" ${missing.length ? 'disabled' : ''}>${missing.length ? `Pick: ${missing[0].name}` : `Add · ${money(total)}`}</button></footer>

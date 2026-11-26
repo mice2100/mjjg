@@ -125,7 +125,10 @@ function groupsFor(itemId) { return S.groups.filter((g) => g.item_ids.includes(i
 // Dishes that can be made gluten free (the gluten_free option group).
 const isGf = (itemId) => S.groups.some((g) => g.id === 'gluten_free' && g.item_ids.includes(itemId));
 // Open the option picker when a dish is tapped: a required choice, or options that cost extra (extra people).
-const asksOptions = (itemId) => groupsFor(itemId).some((g) => g.min > 0 || g.options.some((o) => o.price_cents > 0));
+// Tapping a dish opens its options when a choice is required or priced, and for spice level and
+// gluten free (so staff ask the customer). Requests stay on the line's edit window.
+const ASK_GROUPS = ['spice', 'gluten_free'];
+const asksOptions = (itemId) => groupsFor(itemId).some((g) => g.min > 0 || ASK_GROUPS.includes(g.id) || g.options.some((o) => o.price_cents > 0));
 function modPriceCents(m) {
   const g = S.groups.find((x) => x.id === m.g);
   const o = g && g.options.find((x) => x.name === m.n);

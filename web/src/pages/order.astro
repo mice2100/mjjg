@@ -20,7 +20,6 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
       <div>
         <p class="eyebrow">Online ordering</p>
         <h1>Our menu</h1>
-        <p class="lede">Pickup is free. Delivery anywhere in Moose Jaw: {formatPrice(SITE.deliveryFee)} to a house, {formatPrice(SITE.deliveryFeeApartment)} to an apartment, condo or hotel (no tax on delivery). Prices in CAD, before GST/PST.</p>
       </div>
       <label class="search">
         <span class="visually-hidden">Search the menu</span>
@@ -84,7 +83,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
           <div data-step="cart">
             <div class="seg" role="radiogroup" aria-label="Pickup or delivery">
               <button type="button" role="radio" data-type="pickup">Pickup</button>
-              <button type="button" role="radio" data-type="delivery">Delivery · from {formatPrice(SITE.deliveryFee)}</button>
+              <button type="button" role="radio" data-type="delivery">Delivery</button>
             </div>
             <ul class="cart-lines" data-lines></ul>
             <p class="cart-empty" data-empty>Your order is empty. Add dishes from the menu.</p>
@@ -118,7 +117,7 @@ const menuForClient = MENU.map((m) => ({ id: m.id, code: m.code, name: displayNa
               <input id="f-address" name="delivery_address" autocomplete="street-address" placeholder="House # and street, e.g. 740 thatcher"
                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="street-list" />
               <ul class="street-list" id="street-list" role="listbox" aria-label="Matching streets" data-street-list hidden></ul>
-              <small class="hint">Apartment, condo or hotel? The unit or room number is required, e.g. 123 Main St N, Apt 4. Delivery there is {formatPrice(SITE.deliveryFeeApartment)}.</small>
+              <small class="hint">Apartment, condo or hotel? The unit or room number is required, e.g. 123 Main St N, Apt 4.</small>
             </div>
             <div class="field"><label for="f-notes">Notes for the kitchen (optional)</label><textarea id="f-notes" name="customer_notes" rows="2" maxlength="500"></textarea></div>
             <label class="check"><input type="checkbox" name="marketing_opt_in" /> <span>Email me about new dishes and special offers from Jade Garden. You can unsubscribe at any time.</span></label>
