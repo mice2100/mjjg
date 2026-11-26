@@ -495,6 +495,14 @@ body.osk-open .fanwrap{display:none}
   padding:8px max(8px,env(safe-area-inset-right,0px)) max(8px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
   display:flex;flex-direction:column;gap:7px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .osk-row{display:flex;gap:6px;justify-content:center}
+/* What is being typed, always visible above the keys. */
+.osk-bar{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--navy);border-radius:10px;padding:6px 12px;min-height:46px;max-width:980px;width:100%;margin:0 auto}
+.osk-label{flex:none;max-width:34%;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.osk-text{flex:1;min-width:0;font-size:20px;color:var(--ink);white-space:pre;overflow:hidden;text-align:left}
+.osk-text.osk-empty{color:var(--muted)}
+.osk-caret{display:inline-block;width:2px;height:1.1em;vertical-align:-.15em;background:var(--navy);margin:0 1px;animation:oskblink 1s steps(1) infinite}
+@keyframes oskblink{50%{opacity:0}}
+.osk-keys{display:flex;justify-content:center;gap:10px}
 .osk-key{flex:1 1 0;max-width:96px;min-height:50px;border:0;border-radius:9px;background:#fff;color:var(--ink);font-size:21px;font-weight:500;box-shadow:0 1px 0 rgba(0,0,0,.25);padding:0}
 .osk-key:active{background:var(--accent-soft)}
 .osk-fn{background:#B9C3BD;font-size:16px;font-weight:600}
@@ -503,7 +511,7 @@ body.osk-open .fanwrap{display:none}
 .osk-space{flex:5 1 0;max-width:460px}
 .osk-123,.osk-abc{flex:1.4 1 0;max-width:120px}
 .osk-done{flex:1.8 1 0;max-width:150px;background:var(--navy);color:#fff}
-.osk.osk-numpad{flex-direction:row;justify-content:center;gap:10px}
+.osk.osk-numpad .osk-bar{max-width:580px}
 .osk-pad{display:flex;flex-direction:column;gap:7px;width:min(420px,70vw)}
 .osk-numpad .osk-key{max-width:none;min-height:52px;font-size:24px}
 .osk-side{display:flex;width:140px}
@@ -548,3 +556,15 @@ body.osk-open .fanwrap{display:none}
 .choice .num{font-weight:700}
 .choice:active:not(:disabled){background:var(--sunk)}
 .choice.out{opacity:.55}
+
+/* Short screens (tablets in landscape): smaller keys, tighter window, so more of the window shows. */
+@media (max-height:820px){
+  .osk{gap:5px;padding-top:6px}
+  .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:19px}
+  .osk-numpad .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:21px}
+  .osk-bar{min-height:40px;padding:4px 12px}
+  body.osk-open .modal-wrap{padding-top:6px;padding-bottom:6px}
+  body.osk-open .shead{padding:8px 16px}
+  body.osk-open .sfoot{padding:8px 16px}
+  body.osk-open .sbody{padding:10px 16px;gap:10px}
+}

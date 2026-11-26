@@ -4,6 +4,8 @@
 // at the bottom. The app shrinks above it, so nothing is covered. Number fields
 // (inputmode decimal / numeric / tel) get a number pad. The header button switches back to
 // the tablet's own keyboard when needed (for example to type in another language).
+// A strip on top of the keys always shows the field's name and what has been typed, so the text
+// stays readable even when the window above is too short to show the field itself.
 'use strict';
 
 const OSK = {
@@ -80,8 +82,33 @@ function oskRender() {
     return `<button type="button" tabindex="-1" class="osk-key${cls}${k === 'shift' && OSK.shift ? ' on' : ''}" data-k="${esc(k)}">${esc(text)}</button>`;
   }).join('')}</div>`).join('');
   OSK.el.className = `osk${layout === 'num' ? ' osk-numpad' : ''}`;
-  OSK.el.innerHTML = layout === 'num' ? `<div class="osk-pad">${rows}</div><div class="osk-side"><button type="button" tabindex="-1" class="osk-key osk-fn osk-done" data-k="done">Done</button></div>` : rows;
+  const keys = layout === 'num' ? `<div class="osk-keys"><div class="osk-pad">${rows}</div><div class="osk-side"><button type="button" tabindex="-1" class="osk-key osk-fn osk-done" data-k="done">Done</button></div></div>` : rows;
+  OSK.el.innerHTML = `<div class="osk-bar"><span class="osk-label"></span><span class="osk-text"></span></div>${keys}`;
+  oskEcho();
+  // Letters and the number pad differ in height: keep the window above in step.
+  if (!OSK.el.hidden && document.body.classList.contains('osk-open')) document.documentElement.style.setProperty('--osk-h', OSK.el.offsetHeight + 'px');
 }
+
+// The field's name (its label, else its placeholder) and its text with the cursor.
+function fieldLabel(el) {
+  const l = el.labels?.[0] || el.closest('.field, label')?.querySelector('label');
+  const t = (l && l !== el ? l.textContent : '') || el.getAttribute('aria-label') || '';
+  return t.replace(/\s+/g, ' ').trim();
+}
+function oskEcho() {
+  const el = OSK.target;
+  if (!OSK.el || !el) return;
+  const label = OSK.el.querySelector('.osk-label'), text = OSK.el.querySelector('.osk-text');
+  label.textContent = fieldLabel(el) || 'Typing';
+  const v = el.value || '';
+  let at = v.length;
+  try { if (el.selectionStart != null) at = el.selectionStart; } catch { /* email / number fields */ }
+  text.classList.toggle('osk-empty', !v);
+  text.innerHTML = v ? `${esc(v.slice(0, at))}<i class="osk-caret"></i>${esc(v.slice(at))}` : `<i class="osk-caret"></i>${esc(el.placeholder || '')}`;
+  text.scrollLeft = text.scrollWidth; // long notes: keep the end in view
+}
+document.addEventListener('input', (e) => { if (OSK.target && e.target === OSK.target) oskEcho(); });
+document.addEventListener('selectionchange', () => { if (OSK.target && document.activeElement === OSK.target) oskEcho(); });
 
 function oskShow(el) {
   OSK.target = el;
@@ -91,7 +118,7 @@ function oskShow(el) {
   OSK.el.hidden = false;
   document.body.classList.add('osk-open');
   document.documentElement.style.setProperty('--osk-h', OSK.el.offsetHeight + 'px');
-  setTimeout(() => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }), 30);
+  setTimeout(() => el.scrollIntoView({ block: 'center', inline: 'nearest' }), 30);
 }
 
 function oskHide() {
