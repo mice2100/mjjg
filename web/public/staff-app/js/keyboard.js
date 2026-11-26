@@ -6,6 +6,8 @@
 // the tablet's own keyboard when needed (for example to type in another language).
 // A strip on top of the keys always shows the field's name and what has been typed, so the text
 // stays readable even when the window above is too short to show the field itself.
+// Landscape tablets: the keyboard docks on the right and the app shrinks to its left (more room
+// across than up and down). Upright screens and phones: it docks at the bottom.
 'use strict';
 
 const OSK = {
@@ -86,7 +88,7 @@ function oskRender() {
   OSK.el.innerHTML = `<div class="osk-bar"><span class="osk-label"></span><span class="osk-text"></span></div>${keys}`;
   oskEcho();
   // Letters and the number pad differ in height: keep the window above in step.
-  if (!OSK.el.hidden && document.body.classList.contains('osk-open')) document.documentElement.style.setProperty('--osk-h', OSK.el.offsetHeight + 'px');
+  if (!OSK.el.hidden && document.body.classList.contains('osk-open')) oskFit();
 }
 
 // The field's name (its label, else its placeholder) and its text with the cursor.
@@ -110,6 +112,21 @@ function oskEcho() {
 document.addEventListener('input', (e) => { if (OSK.target && e.target === OSK.target) oskEcho(); });
 document.addEventListener('selectionchange', () => { if (OSK.target && document.activeElement === OSK.target) oskEcho(); });
 
+// Side or bottom, and how much room the app leaves for the keyboard.
+const OSK_SIDE = window.matchMedia('(orientation: landscape) and (min-width: 900px)');
+function oskFit() {
+  const open = !!OSK.el && !OSK.el.hidden && document.body.classList.contains('osk-open');
+  const side = OSK_SIDE.matches;
+  document.body.classList.toggle('osk-right', side);
+  const root = document.documentElement.style;
+  root.setProperty('--osk-h', open && !side ? OSK.el.offsetHeight + 'px' : '0px');
+  root.setProperty('--osk-w', open && side ? OSK.el.offsetWidth + 'px' : '0px');
+}
+OSK_SIDE.addEventListener?.('change', () => {
+  oskFit();
+  if (OSK.target) setTimeout(() => OSK.target?.scrollIntoView({ block: 'center', inline: 'nearest' }), 60);
+});
+
 function oskShow(el) {
   OSK.target = el;
   // Capital first letter for names; plain for everything else.
@@ -117,7 +134,7 @@ function oskShow(el) {
   oskRender();
   OSK.el.hidden = false;
   document.body.classList.add('osk-open');
-  document.documentElement.style.setProperty('--osk-h', OSK.el.offsetHeight + 'px');
+  oskFit();
   setTimeout(() => el.scrollIntoView({ block: 'center', inline: 'nearest' }), 30);
 }
 
@@ -125,7 +142,7 @@ function oskHide() {
   OSK.target = null;
   if (OSK.el) OSK.el.hidden = true;
   document.body.classList.remove('osk-open');
-  document.documentElement.style.setProperty('--osk-h', '0px');
+  oskFit();
 }
 
 function oskType(el, text) {

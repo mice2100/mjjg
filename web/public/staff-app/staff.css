@@ -485,10 +485,11 @@ textarea.input{resize:vertical;min-height:60px}
 /* keep the + button over the card list, not over the order panel's buttons */
 @media (min-width:861px){.regsplit ~ .fanwrap{right:calc(max(16px,env(safe-area-inset-right,0px)) + 18px + min(440px,40vw) + 24px)}}
 
-/* on-screen keyboard (js/keyboard.js): docks at the bottom; the app shrinks above it */
-:root{--osk-h:0px}
-body.osk-open .app{padding-bottom:var(--osk-h)}
-body.osk-open .modal-wrap{bottom:var(--osk-h)}
+/* on-screen keyboard (js/keyboard.js): docks at the bottom (the app shrinks above it) or, on
+   landscape tablets, on the right (the app shrinks to its left) */
+:root{--osk-h:0px;--osk-w:0px}
+body.osk-open .app{padding-bottom:var(--osk-h);padding-right:var(--osk-w)}
+body.osk-open .modal-wrap{bottom:var(--osk-h);right:var(--osk-w)}
 body.osk-open .toast{bottom:calc(var(--osk-h) + 12px)}
 body.osk-open .fanwrap{display:none}
 .osk{position:fixed;left:0;right:0;bottom:0;z-index:70;background:#D5DBD7;border-top:1px solid var(--line);
@@ -559,12 +560,25 @@ body.osk-open .fanwrap{display:none}
 
 /* Short screens (tablets in landscape): smaller keys, tighter window, so more of the window shows. */
 @media (max-height:820px){
-  .osk{gap:5px;padding-top:6px}
-  .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:19px}
-  .osk-numpad .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:21px}
-  .osk-bar{min-height:40px;padding:4px 12px}
-  body.osk-open .modal-wrap{padding-top:6px;padding-bottom:6px}
-  body.osk-open .shead{padding:8px 16px}
-  body.osk-open .sfoot{padding:8px 16px}
-  body.osk-open .sbody{padding:10px 16px;gap:10px}
+  body:not(.osk-right) .osk{gap:5px;padding-top:6px}
+  body:not(.osk-right) .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:19px}
+  body:not(.osk-right) .osk-numpad .osk-key{min-height:clamp(36px,6.2vh,48px);font-size:21px}
+  body:not(.osk-right) .osk-bar{min-height:40px;padding:4px 12px}
+  body.osk-open:not(.osk-right) .modal-wrap{padding-top:6px;padding-bottom:6px}
+  body.osk-open:not(.osk-right) .shead{padding:8px 16px}
+  body.osk-open:not(.osk-right) .sfoot{padding:8px 16px}
+  body.osk-open:not(.osk-right) .sbody{padding:10px 16px;gap:10px}
 }
+
+/* Side keyboard (landscape tablets): full height on the right, keys near the bottom for thumbs. */
+body.osk-right .osk{left:auto;top:0;width:min(44vw,560px);border-top:0;border-left:1px solid var(--line);
+  justify-content:flex-end;gap:8px;padding:max(10px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) 10px}
+body.osk-right .osk-row{gap:5px}
+body.osk-right .osk-key{min-height:clamp(44px,9vh,62px);font-size:20px}
+body.osk-right .osk-fn{font-size:15px}
+body.osk-right .osk-bar{flex-direction:column;align-items:stretch;gap:2px;min-height:0;padding:8px 12px;margin-bottom:auto}
+body.osk-right .osk-label{max-width:none}
+body.osk-right .osk-text{font-size:22px;white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow:auto}
+body.osk-right .osk-pad{width:auto;flex:1}
+body.osk-right .osk-numpad .osk-key{min-height:clamp(48px,10vh,70px)}
+body.osk-right .osk-side{width:110px}
