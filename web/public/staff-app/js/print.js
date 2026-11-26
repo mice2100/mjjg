@@ -21,7 +21,16 @@ function paperButton() {
   const b = $('paperBtn');
   if (b) b.textContent = `Paper: ${receiptMm()} mm`;
 }
-const printButtons = (id) => `<button class="btn" data-act="print" data-id="${esc(id)}">Print customer receipt</button><button class="btn" data-act="printMerchant" data-id="${esc(id)}">Print merchant receipt</button>`;
+// One Print button; tapping it pops up the two receipts to choose from.
+const printButtons = (id) => `<span class="printwrap"><button class="btn" type="button" data-print-toggle aria-haspopup="menu">Print</button>
+  <span class="printmenu" role="menu"><button class="pmitem" role="menuitem" data-act="print" data-id="${esc(id)}">Customer receipt</button><button class="pmitem" role="menuitem" data-act="printMerchant" data-id="${esc(id)}">Merchant receipt</button></span></span>`;
+document.addEventListener('click', (e) => {
+  const wrap = e.target.closest('.printwrap');
+  document.querySelectorAll('.printwrap.open').forEach((w) => { if (w !== wrap) w.classList.remove('open'); });
+  if (!wrap) return;
+  if (e.target.closest('[data-print-toggle]')) wrap.classList.toggle('open');
+  else if (e.target.closest('.pmitem')) wrap.classList.remove('open');
+});
 
 function thermalHtml(o, mm, copy = 'customer') {
   const merchant = copy === 'merchant';

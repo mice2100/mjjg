@@ -45,7 +45,7 @@ function viewTables() {
   const held = U.draft && !U.draft.id && U.draft.lines.length ? `<div class="callout"><span>An unsaved ${TYPES[U.draft.type].toLowerCase()} order is on the Order screen.</span><button class="btn sm" data-act="view" data-v="register">Go to it</button></div>` : '';
   // Cards on the left in order (oldest first), the chosen order on the right like a receipt.
   const sel = S.orders.find((o) => o.id === U.sel);
-  return `<div class="regsplit">
+  return `<div class="regsplit ${sel ? 'has-sel' : ''}">
     <div class="orders" data-keep="reglist">
       <h2>Register</h2>${held}
       <nav class="otabs" aria-label="Order category">${tabs}</nav>
