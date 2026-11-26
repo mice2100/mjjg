@@ -483,8 +483,8 @@ textarea.input{resize:vertical;min-height:60px}
 @media (max-width:860px){.regsplit{grid-template-columns:minmax(0,1fr);height:auto}.regdetail{display:none}.regsplit .orders{height:auto;overflow:visible}}
 .regsplit .orders > *{flex-shrink:0}
 /* keep the + button over the card list, not over the order panel's buttons */
-/* The + button: bottom right when no order is open; between the cards and the open order otherwise. */
-@media (min-width:861px){.regsplit.has-sel ~ .fanwrap{right:calc(max(16px,env(safe-area-inset-right,0px)) + 440px + 9px - 32px);bottom:calc(50% - 32px)}}
+/* The + button: bottom right when no order is open; hidden while an order is open on the right. */
+@media (min-width:861px){.regsplit.has-sel ~ .fanwrap{display:none}}
 /* One Print button; the two receipts pop up above it. */
 .printwrap{position:relative;display:inline-flex}
 .printmenu{position:absolute;left:0;bottom:calc(100% + 10px);display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;
