@@ -74,6 +74,10 @@ const mins = (iso) => Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 60
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString('en-CA', { timeZone: 'America/Regina', hour: 'numeric', minute: '2-digit' });
 const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Regina', month: 'short', day: 'numeric', year: '2-digit' });
 const shortName = (name) => String(name || '').replace(/^[A-Z]{1,2}\d+[A-Za-z]?\.?\s+/, '');
+// One order line in a summary: "1× Chicken Low Mein (Low Mein (Soft Skinny Noodles))". Options the
+// customer picked are kept; WooCommerce ones ("Noodle Type: Low Mein") show just the choice.
+const modText = (m) => (m.g === 'wc' && m.group && m.n.startsWith(m.group + ': ') ? m.n.slice(m.group.length + 2) : m.n);
+const lineSummary = (it) => `${it.qty}× ${shortName(it.name)}${it.mods && it.mods.length ? ` (${it.mods.map(modText).join(', ')})` : ''}`;
 const formatPhone = (d) => (d.length > 6 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d);
 const digitsOf = (s) => {
   let d = String(s || '').replace(/\D/g, '');

@@ -220,7 +220,7 @@ function startModal() {
     ${e.addr ? `<span class="ferr">${e.addr}</span>` : ''}${e.apt ? `<span class="ferr">${e.apt}</span>` : ''}
     <div class="chips" role="group" aria-label="Delivery to">${Object.entries(PLACES).map(([k, n]) => `<button type="button" class="chip ${startPlace() === k ? 'on' : ''}" data-act="splace" data-p="${k}" aria-pressed="${startPlace() === k}">${n} · ${$c(DELIVERY_FEES[k])}</button>`).join('')}</div></div>` : '';
   const hist = c && c.found && c.orders.length ? `<div class="field"><label>Order history (${c.orders.length})</label><div class="alist">${c.orders.map((o, i) => {
-    const sum = o.items.filter((it) => !it.free).map((it) => `${it.qty}× ${shortName(it.name)}`).join(', ');
+    const sum = o.items.filter((it) => !it.free).map(lineSummary).join(', ');
     return `<div class="hist ${o.status === 'cancelled' ? 'cancelled' : ''}"><span class="muted">${fmtDate(o.created_at)}</span><span class="sum" title="${esc(sum)}">${o.delivery_type === 'delivery' ? 'Delivery' : o.delivery_type === 'dinein' ? 'Dine-in' : 'Pickup'} · ${esc(sum)}</span>
       <b class="num">${$m(o.total)}</b><button type="button" class="btn sm" data-act="reorder" data-i="${i}">Reorder</button></div>`;
   }).join('')}</div></div>` : '';

@@ -20,7 +20,7 @@ const unsentOf = (o) => o.items.reduce((a, it) => a + Math.max(0, it.qty - it.se
 
 function orderCard(o) {
   const ps = payState(o), open = o.status === 'pending', pend = open && isPos(o) ? unsentOf(o) : 0;
-  const items = o.items.map((it) => `${it.qty}× ${shortName(it.name)}`).join(', ');
+  const items = o.items.map(lineSummary).join(', ');
   const time = open ? mins(o.created_at) + ' min' : o.status === 'cancelled' ? 'Cancelled' : fmtTime(o.closed_at || o.updated_at);
   // Dine-in: the table. Pickup: name, then the phone in bold. Delivery: address, then the
   // phone in bold, then the name. A missing name is left blank.
